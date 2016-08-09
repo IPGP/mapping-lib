@@ -1,4 +1,4 @@
-# mapping-matlab/latlonutm
+# Latitude/longitude to and from UTM coordinates precise and vectorized conversion
 
 ## ll2utm.m
 LL2UTM converts latitude/longitude coordinates to UTM.
