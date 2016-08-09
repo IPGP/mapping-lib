@@ -1,4 +1,4 @@
-# mapping-matlab/readhgt: Import/download NASA SRTM DEM data files (.HGT)
+# Import/download NASA SRTM DEM data files (.HGT)
 
 # readhgt.m
 This function imports .HGT "height" binary data files from NASA SRTM global digital elevation model of Earth land, corresponding to 1x1 degree tiles of 3-arc seconds resolution (SRTM3, around 90 m) and 1-arc second (SRTM1, around 30 m) for USA territory, and returns coordinates vectors latitude and longitude, and a matrix of elevation values.
@@ -22,7 +22,7 @@ readhgt(-9,119:123,'merge')
 X=readhgt(40:48,-123:-121);
 ```
 
-![Around Seattle, USA (SRTM1) obtained with readhgt(46:47,-123:-122])](readhgt_example_seattle.png)
+![Around Seattle, USA (SRTM1) obtained with readhgt(46:47,-123:-122)](readhgt_example_seattle.png)
 ![Misti volcano,  (SRTM1) obtained with readhgt([-16.4,-16.2,-71.5,-71.3])](readhgt_example_misti.png)
 ![East African Rift volcanoes, Tanzania  (SRTM3) obtained with readhgt(-4:-3,35:36)](readhgt_example_tanzania.png)
 
