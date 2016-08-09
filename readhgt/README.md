@@ -10,7 +10,7 @@ Examples:
 ```matlab
 readhgt(48,2)
 ```
-![Paris, France (SRTM3) obtained with readhgt(48,2)](readhgt_example_seattle.png)
+![Paris, France (SRTM3) obtained with readhgt(48,2)](readhgt_example_paris.png)
 
 - to plot a map of Flores volcanic island, Indonesia (5 tiles):
 ```matlab
