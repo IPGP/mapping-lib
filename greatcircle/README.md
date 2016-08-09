@@ -1,4 +1,4 @@
-# mapping-matlab/greatcircle
+# Shortest and rhumb line path, distance and bearing
 
 ## greatcircle.m
 The function GREATCIRCLE computes the shortest path along the great circle ("as the crow flies") between two points defined by their geographic coordinates (latitude and longitude). With one output argument it returns distance or vector of distances, with two or more output arguments it returns path coordinates and optional vector of distances and bearing angles along the path.
