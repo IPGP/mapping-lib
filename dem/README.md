@@ -6,15 +6,23 @@ Color mapping and lighting parameters can be changed from default values. In add
 
 This may be useful to produce high-quality and moderate-size Postscript image adapted for publication.
 
-Figure examples:
+## Examples
 
 Moon North Pole using the bone colormap and high contrast lighting (DEM source: raster LRO/LOLA LTVT)
+
 ![](dem_example_moon_bone.png)
 
 Indonesia archipelago using default colormaps, 'dms' axis basemap and legend scales (DEM source: raster NOAA/NGDC ETOPO1)
+
 ![](dem_example_indonesia.png)
 
 Soufrière of Guadeloupe volcano lava dome: 1-m resolution with NaN values (DEM source: OVSG-IPGP/SCIAC)
+
 ![](dem_example_dome.png)
 
+
+## Author
+**François Beauducel**, [IPGP](www.ipgp.fr), [beaudu](https://github.com/beaudu), beauducel@ipgp.fr 
+
+## Documentation
 See "doc dem" for syntax, examples and help. See also the READHGT function from same author.
