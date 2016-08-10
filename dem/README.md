@@ -1,5 +1,6 @@
 # Shaded relief image plot (digital elevation model)
 
+## dem.m
 This function plots regular grids of elevation X,Y,Z in a more efficient manner than SURFL Matlab's function, because it recomputes lighting and displays result as shaded color flat RGB image. It uses also median-style filter to deal with min/max values of elevations and gradient, and proposes two specific colormaps "landcolor" and "seacolor".
 
 Color mapping and lighting parameters can be changed from default values. In addition, several options are available: 'cartesian' to add decimal axis, 'latlon' to add geographical axis (GMT-like), 'legend' for an automatic scaling legend, 'lake' for automatic flat area color-filling and 'interp' to fill the novalue gaps...
