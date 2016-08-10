@@ -1,5 +1,6 @@
 # Import/download NASA SRTM DEM data files (.HGT)
 
+## readhgt.m
 This function imports .HGT "height" binary data files from NASA SRTM global digital elevation model of Earth land, corresponding to 1x1 degree tiles of 3-arc seconds resolution (SRTM3, around 90 m) and 1-arc second (SRTM1, around 30 m) for USA territory, and returns coordinates vectors latitude and longitude, and a matrix of elevation values.
 
 The function includes an automatic download of data from the USGS SRTM webserver, so indicating latitude and longitude is sufficient to get the data and instant map plot anywhere in the World. Also some basic options as 'merge' to concatenate tiles, 'interp' for gaps (novalue) linear interpolation, 'crop' for rectangle selection inside tile(s).
