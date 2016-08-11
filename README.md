@@ -7,6 +7,9 @@ Import/download NASA SRTM worldwide topographic data files (.HGT).
 ### [DEM](dem)
 Shaded relief image plot for digital elevation model.
 
+### [NANINTERP2](naninterp2)
+2-D optimized linear interpolation.
+
 ### [LL2UTM and UTM2LL](latlonutm)
 Latitude/longitude to and from UTM coordinates precise and vectorized conversion.
 
