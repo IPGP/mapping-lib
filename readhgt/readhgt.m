@@ -51,7 +51,7 @@ function varargout = readhgt(varargin)
 %
 %	'srtm1'
 %	   Downloads SRTM1 tiles which are 9 times bigger than default SRTM3 
-%	   ! EXPERIMENTAL ! since the used URL from USGS seems temporary.
+%	   ! EXPERIMENTAL ! since the used URL seems unofficial.
 %	   ! Beware with large zones may lead to computer memory issues.
 %	   ! SRTM1 and SRTM3 tiles hold the same filename, while they have 
 %	   different size. Do not store them in the same directory to avoid
@@ -125,7 +125,7 @@ function varargout = readhgt(varargin)
 %	Acknowledgments: Yves Gaudemer, Jinkui Zhu, Greg
 %
 %	Created: 2012-04-22 in Paris, France
-%	Updated: 2016-07-08
+%	Updated: 2016-11-08
 
 %	Copyright (c) 2016, François Beauducel, covered by BSD License.
 %	All rights reserved.
@@ -164,7 +164,8 @@ n = 1;
 srtm1 = any(strcmpi(varargin,'srtm1'));
 if srtm1
 	% EXPERIMENTAL: SRTM1 full resolution tiles available here (2016):
-	url = 'http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11';
+	%url = 'http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11';
+	url = 'http://rmd.neoknet.com/srtm1';
 else
 	% official USGS SRTM3 tiles (and SRTM1 for USA):
 	url = 'http://dds.cr.usgs.gov/srtm/version2_1';
@@ -322,7 +323,8 @@ else
 				end
 			else
 				if srtm1
-					ff = sprintf('/%s%s.SRTMGL1.hgt.zip',slat,slon);
+					%ff = sprintf('/%s%s.SRTMGL1.hgt.zip',slat,slon);
+					ff = sprintf('/%s%s.hgt.zip',slat,slon);
 				else
 					%fsrtm = sprintf('%s/%s',fileparts(mfilename('fullpath')),fidx);
 					fsrtm = fidx;
