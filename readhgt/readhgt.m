@@ -120,12 +120,12 @@ function varargout = readhgt(varargin)
 %		Institut de Physique du Globe de Paris
 %
 %	References:
-%		http://dds.cr.usgs.gov/srtm/version2_1
+%		https://dds.cr.usgs.gov/srtm/version2_1
 %
 %	Acknowledgments: Yves Gaudemer, Jinkui Zhu, Greg
 %
 %	Created: 2012-04-22 in Paris, France
-%	Updated: 2016-11-08
+%	Updated: 2016-12-13
 
 %	Copyright (c) 2016, François Beauducel, covered by BSD License.
 %	All rights reserved.
@@ -168,7 +168,7 @@ if srtm1
 	url = 'http://rmd.neoknet.com/srtm1';
 else
 	% official USGS SRTM3 tiles (and SRTM1 for USA):
-	url = 'http://dds.cr.usgs.gov/srtm/version2_1';
+	url = 'https://dds.cr.usgs.gov/srtm/version2_1';
 end
 
 srtm3 = any(strcmpi(varargin,'srtm3'));
