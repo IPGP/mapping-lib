@@ -176,6 +176,8 @@ function varargout=dem(x,y,z,varargin)
 %	Updated: 2016-01-31
 
 %	History:
+%	[2016-12-21] v2.4
+%		- improves the colormap splitting between land and sea 
 %	[2016-04-19] v2.3
 %		- major update (thanks to mas Wiwit)
 %	[2016-01-31] v2.2
@@ -557,7 +559,7 @@ if isnan(zmax)
 end
 dz = zmax - zmin;
 
-if decim & n < 0
+if decim && n < 0
 	xi = linspace(x(1),x(end),-n*length(x));
 	yi = linspace(y(1),y(end),-n*length(y))';
 	[xx,yy] = meshgrid(xi,yi);
@@ -576,11 +578,17 @@ end
 
 if dz > 0
 	% builds the colormap: concatenates seacolor and landcolor around 0
+	% after interpolation to have exactly one color level per meter.
 	if ~isempty(csea)
-		l = size(csea,1);
+% 		l = size(csea,1);
+% 		if zmin < 0 && zmax > 0
+% 			r = size(cland,1)*abs(zmin)/zmax/l;
+% 			cmap = cat(1,interp1(1:l,csea,linspace(1,l,ceil(l*r)),'*linear'),cland);
 		if zmin < 0 && zmax > 0
-			r = size(cland,1)*abs(zmin)/zmax/l;
-			cmap = cat(1,interp1(1:l,csea,linspace(1,l,ceil(l*r)),'*linear'),cland);
+			lcs = size(csea,1);
+			lcl = size(cland,1);
+			cmap = cat(1,interp1(1:lcs,csea,linspace(1,lcl,abs(zmin)),'*linear'), ...
+				interp1(1:lcl,cland,linspace(1,lcl,abs(zmax)),'*linear'));
 		elseif zmax <=0
 			cmap = csea;
 		end

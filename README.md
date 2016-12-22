@@ -7,6 +7,9 @@ Import/download NASA SRTM worldwide topographic data files (.HGT).
 ### [DEM](dem)
 Shaded relief image plot for digital elevation model.
 
+### [IBIL](ibil)
+Import ESRI BIL raster binary files.
+
 ### [NANINTERP2](naninterp2)
 2-D optimized linear interpolation.
 
