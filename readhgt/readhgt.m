@@ -19,7 +19,6 @@ function varargout = readhgt(varargin)
 %	READHGT(FILENAME) reads HGT data file FILENAME, must be in the form
 %	"[N|S]yy[E|W]xxx.hgt[.zip]", as downloaded from SRTM data servers.
 %
-%
 %	X=READHGT(...) returns a structure X containing: 
 %		lat: coordinate vector of latitudes (decimal degree)
 %		lon: coordinate vector of longitudes (decimal degree)
@@ -62,12 +61,23 @@ function varargout = readhgt(varargin)
 %	   downloaded only for USA territory, if exists).
 %
 %	'outdir',OUTDIR
-%	   Specifies output directory OUTDIR to write (and search) downloaded 
-%	   files. Former syntax READHGT(LAT,LON,OUTDIR) also accepted.
+%	   Specifies output directory OUTDIR to write downloaded files and/or 
+%	   to search existing files. Former syntax READHGT(LAT,LON,OUTDIR) also
+%	   accepted.
 %
 %	'url',URL
 %	   Specifies the URL address to find HGT files (default is USGS). 
 %	   Former syntax READHGT(LAT,LON,OUTDIR,URL) still accepted.
+%
+%	'wget'
+%	   Will use external command wget to download the files (for Linux and
+%	   MacOSX systems). For MacOSX, wget must be installed using homebrew,
+%	   macports, fink or compiling from sources.
+%	   ! NOTICE ! since 2016, USGS has moved SRTM files to a secured 
+%	   https:// URL. This causes Matlab versions older than 2014b failing
+%	   dowload the tiles automatically, because of unzip function and 
+%	   certificate problems. This issue can be surrounded using this 'wget'
+%	   option.
 %
 %
 %	--- Examples ---
@@ -85,7 +95,7 @@ function varargout = readhgt(varargin)
 %		X=readhgt(40:48,-123:-121,'tiles');
 %
 %
-%	--- Informations ---
+%	--- Information ---
 %
 %	- each file corresponds to a tile of 1x1 degree of a square grid
 %	  1201x1201 of elevation values (SRTM3 = 3 arc-seconds), and for USA  
@@ -125,7 +135,7 @@ function varargout = readhgt(varargin)
 %	Acknowledgments: Yves Gaudemer, Jinkui Zhu, Greg
 %
 %	Created: 2012-04-22 in Paris, France
-%	Updated: 2016-12-13
+%	Updated: 2016-12-27
 
 %	Copyright (c) 2016, François Beauducel, covered by BSD License.
 %	All rights reserved.
@@ -176,6 +186,7 @@ makeplot = any(strcmpi(varargin,'plot'));
 merge = any(strcmpi(varargin,'merge'));	% unused former option but needs to be considered as valid
 tiles = any(strcmpi(varargin,'tiles'));
 inter = any(strcmpi(varargin,'interp'));
+wget = any(strcmpi(varargin,'wget'));
 
 % --- option: 'crop' or 'crop',[LAT1,LAT2,LON1,LON2]
 crop = [];
@@ -235,8 +246,9 @@ if ~isempty(kurl)
 	end
 end
 
+% needs to count the arguments to allow former syntaxes...
 nargs = makeplot + merge + tiles + cropflag + srtm1 + srtm3 + inter ...
-	+ decimflag + outflag + urlflag;
+	+ decimflag + outflag + urlflag + wget;
 
 % syntax READHGT without argument: opens the GUI to select a file
 if nargin == nargs
@@ -353,7 +365,19 @@ else
 			else
 				fprintf('Download %s%s ... ',url,ff);
 				try
-					f(n) = unzip([url,ff],out);
+					if wget
+						tmp = tempname;
+						mkdir(tmp)
+						ftmp = sprintf('%s/%s%s.hgt.zip',tmp,slat,slon);
+						[s,w] = system(sprintf('wget -O %s %s%s',ftmp,url,ff));
+						if s
+							disp(w)
+						end
+						f(n) = unzip(ftmp,out);
+						delete(ftmp)
+					else
+						f(n) = unzip([url,ff],out);
+					end
 					fprintf('done.\n');
 				catch
 					fprintf(' ** tile not found. Considering offshore.\n');
