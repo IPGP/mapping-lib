@@ -90,8 +90,12 @@ function varargout=dem(x,y,z,varargin)
 %		land/sea. This option overwrites LANDCOLOR/SEACOLOR options.
 %
 %	'Lake'
-%		Detects automaticaly flat areas different from sea level (non-zero 
+%		Detects automatically flat areas different from sea level (non-zero 
 %		elevations) and colors them as lake surfaces.
+%
+%   'LakeZmin',ZMIN
+%       Activates the 'lake' option only above ZMIN elevations. For 
+%       example, use 'lakezmin',0 to limit lake detection on land.
 %
 %	'Watermark',N
 %		Makes the whole image lighter by a factor of N.
@@ -152,9 +156,10 @@ function varargout=dem(x,y,z,varargin)
 %
 %	'Decim',N
 %		Decimates matrix Z at 1/N times of the original sampling.
+%       If N < 0, oversamples at -N rate.
 %
 %	'NoDecim'
-%		Forces full resolution of Z, no decimation.
+%		Forces full resolution of Z, no decimation (N =1).
 %
 %
 %
@@ -173,9 +178,11 @@ function varargout=dem(x,y,z,varargin)
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 2007-05-17 in Guadeloupe, French West Indies
-%	Updated: 2016-01-31
+%	Updated: 2017-01-09
 
 %	History:
+%	[2017-01-09] v2.5
+%		- new option 'lakezmin' to limit lake detection 
 %	[2016-12-21] v2.4
 %		- improves the colormap splitting between land and sea 
 %	[2016-04-19] v2.3
@@ -407,6 +414,16 @@ else
 	nargs = nargs + 1;
 end
 
+% LAKEZMIN param/value option
+[s,lakezmin] = checkparam(varargin,'lakezmin',@isscalar);
+if s
+    lake = 1;
+	nargs = nargs + 2;
+else
+    lake = 0;
+    lakezmin = NaN;
+end
+
 % FONTSIZE param/value
 [s,fs] = checkparam(varargin,'fontsize',@isscalar);
 nargs = nargs + 2;
@@ -459,13 +476,13 @@ dec = any(strcmpi(varargin,'cartesian') | strcmpi(varargin,'dec'));
 dms = any(strcmpi(varargin,'latlon') | strcmpi(varargin,'dms'));
 scale = any(strcmpi(varargin,'legend') | strcmpi(varargin,'scale'));
 inter = any(strcmpi(varargin,'interp'));
-lake = any(strcmpi(varargin,'lake'));
+lake = any(strcmpi(varargin,'lake')) || lake;
 fbold = any(strcmpi(varargin,'fontbold'));
 noplot = any(strcmpi(varargin,'noplot'));
 
 
 % for backward compatibility (former syntax)...
-nargs = nargs + dec + dms + scale + lake + inter + km + fbold + noplot;
+nargs = nargs + dec + dms + scale + inter + lake + km + fbold + noplot;
 
 if (nargin - nargs) > 3 && ~isempty(varargin{1})
 	opt = varargin{1};
@@ -587,7 +604,7 @@ if dz > 0
 		if zmin < 0 && zmax > 0
 			lcs = size(csea,1);
 			lcl = size(cland,1);
-			cmap = cat(1,interp1(1:lcs,csea,linspace(1,lcl,abs(zmin)),'*linear'), ...
+			cmap = cat(1,interp1(1:lcs,csea,linspace(1,lcl,abs(zmin)+1),'*linear'), ...
 				interp1(1:lcl,cland,linspace(1,lcl,abs(zmax)),'*linear'));
 		elseif zmax <=0
 			cmap = csea;
@@ -637,12 +654,15 @@ if dz > 0
 	
 	% lake option
 	if lake
-		klake = islake(z);
+        klake = islake(z);
+        if ~isnan(lakezmin)
+            klake(z < lakezmin) = false; % removes indexes below ZMIN
+        end
 	else
 		klake = 0;
 	end
 	
-	% set the seacolor for 0 values
+	% set the seacolor (upper color) for 0 values
 	if ~isempty(csea)
 		[i,j] = find(z==0 | klake);
 		if ~isempty(i)
