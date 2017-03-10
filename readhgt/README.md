@@ -12,18 +12,26 @@ readhgt(48,2)
 ```
 ![Paris, France (SRTM3) obtained with readhgt(48,2)](readhgt_example_paris.png)
 
+- to plot a map of the Misti volcano area, Peru (SRTM1 cropped and interpolated tile):
+```matlab
+readhgt([-16.4,-16.2,-71.5,-71.3],'srtm1','interp')
+```
+![Misti volcano,  (SRTM1) obtained with readhgt([-16.4,-16.2,-71.5,-71.3])](readhgt_example_misti.png)
+
 - to plot a map of Flores volcanic island, Indonesia (5 tiles):
 ```matlab
-readhgt(-9,119:123,'merge')
+readhgt(-9,119:123) % syntax with lat/lon tile integers
+% or
+readhgt([-9,-8,119,124]) % syntax with lat/lon box limits
 ```
 
 - to download SRTM1 data of Cascade Range (27 individual tiles):
 ```matlab
-X=readhgt(40:48,-123:-121);
+X=readhgt(40:48,-123:-121,'tiles');
 ```
 
 ![Around Seattle, USA (SRTM1) obtained with readhgt(46:47,-123:-122)](readhgt_example_seattle.png)
-![Misti volcano,  (SRTM1) obtained with readhgt([-16.4,-16.2,-71.5,-71.3])](readhgt_example_misti.png)
+
 ![East African Rift volcanoes, Tanzania  (SRTM3) obtained with readhgt(-4:-3,35:36)](readhgt_example_tanzania.png)
 
 
