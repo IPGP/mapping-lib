@@ -19,7 +19,7 @@ Latitude/longitude to and from UTM coordinates precise and vectorized conversion
 ### [GREATCIRCLE and LOXODROME](greatcircle)
 Shortest and rhumb line path, distance and bearing.
 
-### [VINCENTY AND ELLIPSOID](VINCENTY)
+### [VINCENTY AND ELLIPSOID](vincenty)
 Calculates the distance (in kilometers) using the formula devised by Thaddeus Vincenty.
 
 ### [RADIOCOVER](radiocover)

@@ -29,18 +29,17 @@ Sample values for `ellipsoid` are the following:
 
 The sample values are the following:
 
-=================== =========== ============== ==============
-Model               Major (km)  Minor (km)     1 / f
-=================== =========== ============== ==============
-WGS 1984            6378.137    6356.7523142   298.257223563
-GRS 1980            6378.137    6356.7523141   298.257222101
-G.B. Airy 1830      6377.563396 6356.256909    299.3249646
-Internacional 1924  6378.388    6356.911946    297.0
-Clarke 1880         6378.249145 6356.51486955  293.465
-Australian Nat.     6378.1600   6356.774719    298.25
-=================== =========== ============== ==============
+| Model              | Major (km)  | Minor (km)    | 1 / f         |
+| ------------------ | ----------- | ------------- | ------------- |
+| WGS 1984           | 6378.137    | 6356.7523142  | 298.257223563 |
+| GRS 1980           | 6378.137    | 6356.7523141  | 298.257222101 |
+| G.B. Airy 1830     | 6377.563396 | 6356.256909   | 299.3249646   |
+| Internacional 1924 | 6378.388    | 6356.911946   | 297.0         |
+| Clarke 1880        | 6378.249145 | 6356.51486955 | 293.465       |
+| Australian Nat.    | 6378.1600   | 6356.774719   | 298.25        |
 
-Example:
+### Example
+
 ```matlab
 >> vincenty([37, -76], [37, -9])
 ans = 5830.081
@@ -69,4 +68,4 @@ ref = referenceEllipsoid(code)
 ref = referenceEllipsoid(name)
 ```
 
-Type 'help vincenty' or 'help referenceEllipsoid' for syntax, help and examples.
+Type `help vincenty` or `help referenceEllipsoid` for syntax, help and examples.
