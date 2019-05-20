@@ -93,9 +93,9 @@ function varargout=dem(x,y,z,varargin)
 %		Detects automatically flat areas different from sea level (non-zero 
 %		elevations) and colors them as lake surfaces.
 %
-%   'LakeZmin',ZMIN
-%       Activates the 'lake' option only above ZMIN elevations. For 
-%       example, use 'lakezmin',0 to limit lake detection on land.
+%	'LakeZmin',ZMIN
+%		Activates the 'lake' option only above ZMIN elevations. For 
+%		example, use 'lakezmin',0 to limit lake detection on land.
 %
 %	'Watermark',N
 %		Makes the whole image lighter by a factor of N.
@@ -178,9 +178,11 @@ function varargout=dem(x,y,z,varargin)
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 2007-05-17 in Guadeloupe, French West Indies
-%	Updated: 2017-01-09
+%	Updated: 2017-03-29
 
 %	History:
+%	[2017-03-29] v2.6
+%		- fix in 'lakezmin' option (thanks to Mustafa Çomo?lu)
 %	[2017-01-09] v2.5
 %		- new option 'lakezmin' to limit lake detection 
 %	[2016-12-21] v2.4
@@ -474,15 +476,17 @@ nargs = nargs + 2;
 km = any(strcmpi(varargin,'km'));
 dec = any(strcmpi(varargin,'cartesian') | strcmpi(varargin,'dec'));
 dms = any(strcmpi(varargin,'latlon') | strcmpi(varargin,'dms'));
+kmscale = any(strcmpi(varargin,'kmscale'));
 scale = any(strcmpi(varargin,'legend') | strcmpi(varargin,'scale'));
 inter = any(strcmpi(varargin,'interp'));
 lake = any(strcmpi(varargin,'lake')) || lake;
 fbold = any(strcmpi(varargin,'fontbold'));
 noplot = any(strcmpi(varargin,'noplot'));
+clines = any(strcmpi(varargin,'contourlines'));
 
 
 % for backward compatibility (former syntax)...
-nargs = nargs + dec + dms + scale + inter + lake + km + fbold + noplot;
+nargs = nargs + dec + dms + scale + kmscale + inter + lake + km + fbold + noplot + clines;
 
 if (nargin - nargs) > 3 && ~isempty(varargin{1})
 	opt = varargin{1};
@@ -795,11 +799,40 @@ if dec || dms
 end
 
 % -------------------------------------------------------------------------
+% --- Contour lines
+
+% contour lines
+if clines
+	dz = diff(zlim);
+	% empirical ratio between horizontal extent and elevation interval (dz)
+	%rzh = dz/min(diff(x([1,end]))*cosd(mean(dlat)),diff(y([1,end])))/degkm/4e2;
+	dd = dtick(dz);
+	dz0 = ceil(zlim(1)/dd)*dd:dd:floor(zlim(2)/dd)*dd;
+	dz0(ismember(0,dz0)) = [];	% eliminates 0 value
+	dd = dtick(dz/5);
+	dz1 = ceil(zlim(1)/dd)*dd:dd:floor(zlim(2)/dd)*dd;
+	dz1(ismember(dz1,dz0)) = [];	% eliminates minor ticks in major ticks
+	clrgb = .3*ones(1,3);
+	hold on
+	[~,h] = contour(x,y,z,[0,0,dz1],'-','Color',clrgb);
+	set(h,'LineWidth',0.1);
+	[cs,h] = contour(x,y,z,[0,0,dz0],'-','Color',clrgb);
+	set(h,'LineWidth',1);
+	if ~isempty(dz0)% && clineslabel
+		clabel(cs,h,dz0,'Color',clrgb,'FontSize',fs/2,'FontWeight','bold', ...
+			'LabelSpacing',288,'Margin',fs)
+	end
+	hold off
+end
+
+% -------------------------------------------------------------------------
 % --- Scales legend
+
+%wsc = diff(xlim)*0.01;
+wsc = bw0;
+xsc = xlim(2) + wsc*2 + bwx;
+
 if scale
-	%wsc = diff(xlim)*0.01;
-	wsc = bw0;
-	xsc = xlim(2) + wsc*2 + bwx;
 
 	if wmark
 		cmap = watermark(cmap,wmark);
@@ -816,18 +849,21 @@ if scale
 	imagesc(xsc + wsc*[-1,1]/2,ysc + yscale,repmat(rgbscale,1,2),'clipping','off');
 	patch(xsc + wsc*[-1,1,1,-1],ysc + yscale(end)*[0,0,1,1],'k','FaceColor','none','Clipping','off')
 	text(xsc + 2*wsc + zeros(size(ztick)),ysc + (ztick - zscale(1))*0.5*diff(ylim)/diff(zscale([1,end])),num2str(ztick'), ...
-		'HorizontalAlignment','left','VerticalAlignment','middle','FontSize',6)
+		'HorizontalAlignment','left','VerticalAlignment','middle','FontSize',fs*.75)
 	% indicates min and max Z values
 	text(xsc,ysc - bwy/2,sprintf('%g m',roundsd(zlim(1),3)),'FontWeight','bold', ...
-		'HorizontalAlignment','left','VerticalAlignment','top','FontSize',6)
+		'HorizontalAlignment','left','VerticalAlignment','top','FontSize',fs*.75)
 	text(xsc,ysc + .5*diff(ylim) + bwy/2,sprintf('%g m',roundsd(zlim(2),3)),'FontWeight','bold', ...
-		'HorizontalAlignment','left','VerticalAlignment','bottom','FontSize',6)
+		'HorizontalAlignment','left','VerticalAlignment','bottom','FontSize',fs*.75)
 	
 	% frees axes only if not hold on
 	if ~holdon
 		hold off
 	end
 	
+end
+
+if scale || kmscale
 	% -- distance scale (in km)
 	if dms
 		fsc = degkm;
@@ -836,14 +872,25 @@ if scale
 	end
 	dkm = dtick(diff(ylim)*fsc);
 	ysc = ylim(2) - 0.5*dkm/fsc;
-	patch(xsc + wsc*[-1,-1,0,0],ysc + dkm*0.5*[-1,1,1,-1]/fsc,'k','FaceColor',grey,'clipping','off')
 	if dkm > 1
 		skm = sprintf('%g km',dkm);
 	else
 		skm = sprintf('%g m',dkm*1000);
 	end
-	text(xsc,ysc,skm,'rotation',-90,'HorizontalAlignment','center','VerticalAlignment','bottom', ...
-			'Color',grey,'FontWeight','bold','FontSize',6)
+	if kmscale
+		xsc = xlim(1) + wsc*2;
+		ysc = ylim(1) + wsc*2;
+		patch(xsc + dkm*[0,1,1,0]/fsc,ysc + wsc*[-1,-1,0,0],'k','FaceColor','w')
+		for n = 0:2:(dkm-1)
+			patch(xsc + (n + [0,1,1,0])/fsc,ysc + wsc*[-1,-1,0,0],'k','FaceColor','k')
+		end
+		text(xsc + .5*dkm/fsc,ysc,skm,'HorizontalAlignment','center','VerticalAlignment','bottom', ...
+			'Color','k','FontWeight','bold','FontSize',fs)
+	else
+		patch(xsc + wsc*[-1,-1,0,0],ysc + dkm*0.5*[-1,1,1,-1]/fsc,'k','FaceColor',grey,'clipping','off')
+		text(xsc,ysc,skm,'rotation',-90,'HorizontalAlignment','center','VerticalAlignment','bottom', ...
+			'Color',grey,'FontWeight','bold','FontSize',fs*.75)
+	end
 end
 
 
