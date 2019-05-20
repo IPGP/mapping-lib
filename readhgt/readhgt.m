@@ -38,7 +38,9 @@ function varargout = readhgt(varargin)
 %	   Linearly interpolates missing data.
 %
 %	'decim',N
-%	   Decimates the tiles at 1/N times of the original sampling.
+%	   Decimates the tiles at 1/N times of the original sampling. Plot
+%	   is automatically decimated if necessary. Use N=1 to force full
+%	   resolution (might induces memory issue for large areas).
 %
 %	'crop'
 %	   crops the resulting map around existing land (reduces any sea or 
@@ -135,9 +137,9 @@ function varargout = readhgt(varargin)
 %	Acknowledgments: Yves Gaudemer, Jinkui Zhu, Greg
 %
 %	Created: 2012-04-22 in Paris, France
-%	Updated: 2016-12-27
+%	Updated: 2019-05-20
 
-%	Copyright (c) 2016, François Beauducel, covered by BSD License.
+%	Copyright (c) 2019, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 
@@ -175,6 +177,7 @@ srtm1 = any(strcmpi(varargin,'srtm1'));
 if srtm1
 	% EXPERIMENTAL: SRTM1 full resolution tiles available here (2016):
 	%url = 'http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11';
+	%url = 'http://e4ftl01.cr.usgs.gov/MODV6_Dal_D/SRTM/SRTMGL1.003/2000.02.11';
 	url = 'http://rmd.neoknet.com/srtm1';
 else
 	% official USGS SRTM3 tiles (and SRTM1 for USA):
@@ -265,7 +268,7 @@ if nargin == (1 + nargs) && ischar(varargin{1})
 	if ~exist(f,'file')
 		error('FILENAME must be a valid file name')
 	end
-	[pathname,filename] = fileparts(f);
+	[~,filename] = fileparts(f);
 	f = {f};
 end
 
@@ -307,6 +310,13 @@ else
 				error('OUTDIR is not a valid directory.')
 			end
 		end
+	end
+	
+	% wget option: automatic setting
+	mrel = version('-release');
+	if issorted({mrel,'2014b'}) && ~wget
+		wget = 1;
+		fprintf('** Warning ** Matlab release %s: ''wget'' option forced.\n',mrel);
 	end
 	
 	% if LAT/LON are vectors, NDGRID makes a grid of corresponding tiles
@@ -364,24 +374,28 @@ else
 				f{n} = '';
 			else
 				fprintf('Download %s%s ... ',url,ff);
+				f{n} = '';
 				try
 					if wget
-						tmp = tempname;
-						mkdir(tmp)
-						ftmp = sprintf('%s/%s%s.hgt.zip',tmp,slat,slon);
-						[s,w] = system(sprintf('wget -O %s %s%s',ftmp,url,ff));
-						if s
-							disp(w)
+						if system('which wget')
+							fprintf(' ** wget binary not found. Cannot download tiles.\n');
+						else
+							tmp = tempname;
+							mkdir(tmp)
+							ftmp = sprintf('%s/%s%s.hgt.zip',tmp,slat,slon);
+							[s,w] = system(sprintf('wget -O %s %s%s',ftmp,url,ff));
+							if s
+								disp(w)
+							end
+							f(n) = unzip(ftmp,out);
+							delete(ftmp)
 						end
-						f(n) = unzip(ftmp,out);
-						delete(ftmp)
 					else
 						f(n) = unzip([url,ff],out);
 					end
 					fprintf('done.\n');
 				catch
 					fprintf(' ** tile not found. Considering offshore.\n');
-					f{n} = '';
 				end
 			end
 		end
@@ -397,7 +411,7 @@ end
 
 for n = 1:numel(f)
 	% unzips HGT file if needed
-	if ~isempty(strfind(f{n},'.zip'));
+	if ~isempty(strfind(f{n},'.zip'))
 		X(n).hgt = char(unzip(f{n}));
 		funzip = 1;
 	else
@@ -497,8 +511,20 @@ if nargout == 3 % for backward compatibility...
 	varargout{3} = X(1).z;
 elseif nargout > 0
 	if tiles
+		if decim > 1
+			for n = 1:numel(X)
+				X(n).lon = X(n).lon(1:decim:end);
+				X(n).lat = X(n).lat(1:decim:end);
+				X(n).z = X(n).z(1:decim:end,1:decim:end);
+			end
+		end
 		varargout{1} = X;
 	else
+		if decim > 1
+			Y.lon = Y.lon(1:decim:end);
+			Y.lat = Y.lat(1:decim:end);
+			Y.z = Y.z(1:decim:end,1:decim:end);
+		end
 		varargout{1} = Y;
 	end
 	if nargout == 2
