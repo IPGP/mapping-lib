@@ -27,14 +27,34 @@ function varargout=greatcircle(varargin)
 %
 %	Author: Francois Beauducel <beauducel@ipgp.fr>
 %	Created: 2012-07-26
-%	Updated: 2012-11-14
+%	Updated: 2019-05-28
 %
 %	References:
 %	  http://www.movable-type.co.uk/scripts/latlong.html
 %	  http://en.wikipedia.org/wiki/Haversine_formula
 
-%	Copyright (c) 2012, François Beauducel, covered by BSD License.
+%	Copyright (c) 2019, François Beauducel, covered by BSD License.
 %	All rights reserved.
+%
+%	Revision history:
+%
+%	v1.4 [2019-05-28]
+%	  - greatcircle: fixes the singularity when LON1 and LON2 have 180°
+%	    of difference (thanks to Patrick Hew's comment)
+%
+%	v1.3 [2012-12-24]
+%	  - greatcircle: two possible syntaxes (output distance or path way)
+%	  - loxodrome: bug correction
+%
+%	v1.2 [2012-11-08]
+%	  - bug correction with bearing angle and distances.
+%
+%	v1.1 [2012-10-30]
+%	  - adds loxodrome function
+%	  - improves input argument checking
+%
+%	v1.0 [2012-07-26]
+%	  - initial commit
 %
 %	Redistribution and use in source and binary forms, with or without 
 %	modification, are permitted provided that the following conditions are 
@@ -58,7 +78,7 @@ function varargout=greatcircle(varargin)
 %	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 %	POSSIBILITY OF SUCH DAMAGE.
 
-if nargin < 4 | nargin > 5
+if nargin < 4 || nargin > 5
 	error('Number of input arguments not correct.')
 else
 	lat1 = varargin{1};
@@ -73,31 +93,46 @@ else
 	n = varargin{5};
 end
 
-if any(~cellfun(@isnumeric,varargin))
-	error('All input arguments must be numeric.')
-end
+%if any(~cellfun(@isnumeric,varargin))
+%	error('All input arguments must be numeric.')
+%end
 
 rearth = 6371;	% volumetric Earth radius (in km)
 
 if nargout > 1
 
-	if any(~cellfun(@isscalar,varargin))
-		error('To compute path way all input arguments must be scalars.')
+	%if any(~cellfun(@isscalar,varargin))
+	%	error('To compute path way all input arguments must be scalars.')
+	%end
+
+	% use shortest segment
+	if abs(lon2 - lon1) > 180
+		lon2 = lon2 + 360*sign(lon1 - lon2);
 	end
 
-	% checks that segment is the shortest
-	if abs(lon2-lon1) > 180
-		lon2 = lon2 + 360*sign(lon1-lon2);
-	end
-
-	% defines a linear vector of longitudes
-	lon = linspace(lon1,lon2,n);
-
-	% computes latitudes along the great circle
-	if lon1 == lon2
-		lat = linspace(lat1,lat2,n);
+	% special case of 180° difference between lon1 and lon2 (to avoid singularity 0/0)
+	if abs(lon2 - lon1) == 180
+		if lat2 > -lat1
+			% through the North pole with temporary lat>90
+			lat = linspace(lat1,180 - lat2,n);
+			lon = lon1*ones(size(lat));
+			lon(lat>90) = lon2;
+			lat(lat>90) = 180 - lat(lat>90);
+		else
+			% through the South pole with temporary lat<-90
+			lat = linspace(lat1,-180 - lat2,n);
+			lon = lon1*ones(size(lat));
+			lon(lat<-90) = lon2;
+			lat(lat<-90) = -180 - lat(lat<-90);
+		end
 	else
-		lat = atand((sind(lat1)*cosd(lat2)*sind(lon - lon2) - sind(lat2)*cosd(lat1)*sind(lon - lon1))./(cosd(lat1)*cosd(lat2).*sind(lon1 - lon2)));
+		lon = linspace(lon1,lon2,n);
+		% an other special case: simple segment at constant longitude
+		if lon1 == lon2
+			lat = linspace(lat1,lat2,n);
+		else
+			lat = atand((sind(lat1)*cosd(lat2)*sind(lon - lon2) - sind(lat2)*cosd(lat1)*sind(lon - lon1))./(cosd(lat1)*cosd(lat2).*sind(lon1 - lon2)));
+		end
 	end
 	varargout = {lat,lon};
 
