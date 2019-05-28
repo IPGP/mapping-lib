@@ -41,10 +41,10 @@ function [x,y,f]=ll2utm(varargin)
 %
 %	Author: Francois Beauducel, <beauducel@ipgp.fr>
 %	Created: 2003-12-02
-%	Updated: 2016-08-08
+%	Updated: 2019-05-28
 
 
-%	Copyright (c) 2001-2016, François Beauducel, covered by BSD License.
+%	Copyright (c) 2001-2019, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 
@@ -106,6 +106,10 @@ end
 
 if all([numel(lat),numel(lon)] > 1) && any(size(lat) ~= size(lon))
 	error('LAT and LON must be the same size or scalars.')
+end
+
+if any(abs(lat)>90)
+	error('LAT absolute values must be lower than 90.')
 end
 
 for n = (v+1):nargin
