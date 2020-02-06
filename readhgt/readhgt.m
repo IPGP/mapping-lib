@@ -76,8 +76,8 @@ function varargout = readhgt(varargin)
 %	   MacOSX systems). For MacOSX, wget must be installed using homebrew,
 %	   macports, fink or compiling from sources.
 %	   ! NOTICE ! since 2016, USGS has moved SRTM files to a secured 
-%	   https:// URL. This causes Matlab versions older than 2014b failing
-%	   dowload the tiles automatically, because of unzip function and 
+%	   https:// URL. This causes Matlab versions older than 2016a failing
+%	   download the tiles automatically, because of unzip function and 
 %	   certificate problems. This issue can be surrounded using this 'wget'
 %	   option.
 %
@@ -137,9 +137,9 @@ function varargout = readhgt(varargin)
 %	Acknowledgments: Yves Gaudemer, Jinkui Zhu, Greg
 %
 %	Created: 2012-04-22 in Paris, France
-%	Updated: 2019-05-20
+%	Updated: 2020-02-06
 
-%	Copyright (c) 2019, François Beauducel, covered by BSD License.
+%	Copyright (c) 2020, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 
@@ -391,7 +391,14 @@ else
 							delete(ftmp)
 						end
 					else
-						f(n) = unzip([url,ff],out);
+						if exist('websave','file')
+							ftmp = [tempname(out),'.zip'];
+							websave(ftmp,[url,ff]);
+							f(n) = unzip(ftmp,out);
+							delete(ftmp)
+						else
+							f(n) = unzip([url,ff],out);
+						end
 					end
 					fprintf('done.\n');
 				catch
