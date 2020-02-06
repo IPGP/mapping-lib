@@ -41,7 +41,7 @@ function [x,y,f]=ll2utm(varargin)
 %
 %	Author: Francois Beauducel, <beauducel@ipgp.fr>
 %	Created: 2003-12-02
-%	Updated: 2019-05-28
+%	Updated: 2019-05-29
 
 
 %	Copyright (c) 2001-2019, François Beauducel, covered by BSD License.
@@ -92,7 +92,9 @@ if nargin < 1
 	error('Not enough input arguments.')
 end
 
-if nargin > 1 && isnumeric(varargin{1}) && isnumeric(varargin{2}) && all(size(varargin{1})==size(varargin{2}))
+if nargin > 1 && isnumeric(varargin{1}) && isnumeric(varargin{2}) ...
+		&& (all(size(varargin{1})==size(varargin{2})) ...
+		|| isscalar(varargin(1)) || isscalar(varargin{2}))
 	lat = varargin{1};
 	lon = varargin{2};
 	v = 2;
@@ -112,13 +114,21 @@ if any(abs(lat)>90)
 	error('LAT absolute values must be lower than 90.')
 end
 
+% checks for DATUM and/or ZONE syntax
+% NOTE: the following strategy works in any case except if ZONE argument
+% has a size of 1x2 (in that case it will be interpreted as a DATUM). To
+% force the ZONE syntax with 2 elements, just use ZONE(:) to make a colum
+% vector of 2x1.
 for n = (v+1):nargin
 	% LL2UTM(...,DATUM)
-	if ischar(varargin{n}) || (isnumeric(varargin{n}) && numel(varargin{n})==2)
+	if ischar(varargin{n}) || (isnumeric(varargin{n}) ...
+			&& all(size(varargin{n})==[1,2]))
 		datum = varargin{n};
 	% LL2UTM(...,ZONE)
-	elseif isnumeric(varargin{n}) && (isscalar(varargin{n}) || all(size(varargin{n})==size(lat)))
-			zone = round(varargin{n});
+	elseif isnumeric(varargin{n}) && (isscalar(varargin{n}) ...
+			|| (isscalar(lat) || all(size(varargin{n})==size(lat))) ...
+			&& (isscalar(lon) || all(size(varargin{n})==size(lon))))
+		zone = round(varargin{n});
 	else
 		error('Unknown argument #%d. See documentation.',n)
 	end
