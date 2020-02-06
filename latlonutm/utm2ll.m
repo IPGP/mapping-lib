@@ -31,10 +31,14 @@ function [lat,lon]=utm2ll(x,y,f,datum,varargin)
 %
 %	Author: Francois Beauducel, <beauducel@ipgp.fr>
 %	Created: 2001-08-23
-%	Updated: 2016-08-08
+%	Updated: 2019-05-29
 
+%	Revision history:
+%
+%	[2019-05-29]
+%	  - fix an issue when X or Y are matrices.
 
-%	Copyright (c) 2001-2016, François Beauducel, covered by BSD License.
+%	Copyright (c) 2001-2019, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 
@@ -73,12 +77,15 @@ if nargin < 3
 	error('Not enough input arguments.')
 end
 
-if all([numel(x),numel(y)] > 1) && any(size(x) ~= size(y))
-	error('X and Y must be the same size or scalars.')
+% checks if input arguments have compatible sizes using unique(complex)
+sz = [size(x);size(y);size(f)];
+sz = complex(sz(:,1),sz(:,2));
+if length(unique(sz(sz~=complex(1,1)))) > 1
+	error('X, Y and ZONE must be scalar or vector/matrix of the same size.')
 end
 
-if ~isnumeric(f) || any(f ~= round(f)) || (~isscalar(f) && any(size(f) ~= size(x)))
-	error('ZONE must be integer value, scalar or same size as X and/or Y.')
+if ~isnumeric(f) || any(f ~= round(f))
+	error('ZONE must be integer value.')
 end
 
 if nargin < 4
@@ -99,6 +106,11 @@ else
 	A1 = datum(1);
 	F1 = datum(2);
 end
+
+% calculations are made on column vectors
+x = x(:);
+y = y(:);
+f = f(:);
 
 % constants
 D0 = 180/pi;	% conversion rad to deg
@@ -140,10 +152,12 @@ while any(isnan(p0) | abs(p - p0) > eps) && n < maxiter
 end
 
 if nargout < 2
-	lat = D0*[p(:),l(:)];
+	lat = D0*[p,l];
 else
-	lat = p*D0;
-	lon = l*D0;
+	% reshapes vectors to x/y/f original size
+	sz = max([size(x);size(y);size(f)]);
+	lat = reshape(p*D0,sz);
+	lon = reshape(l*D0,sz);
 end
 
 
