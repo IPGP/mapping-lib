@@ -178,9 +178,11 @@ function varargout=dem(x,y,z,varargin)
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 2007-05-17 in Guadeloupe, French West Indies
-%	Updated: 2017-03-29
+%	Updated: 2019-06-17
 
 %	History:
+%	[2019-06-17]
+%		- fix an issue for single RGB color in sea/land color option
 %	[2017-03-29] v2.6
 %		- fix in 'lakezmin' option (thanks to Mustafa Çomo?lu)
 %	[2017-01-09] v2.5
@@ -598,6 +600,13 @@ end
 % --- Process lighting
 
 if dz > 0
+	% first check if colormaps have the minimum required size
+	if size(csea,1) < 2
+		csea = repmat(csea,256,1);
+	end
+	if size(cland,1) < 2
+		cland = repmat(cland,256,1);
+	end
 	% builds the colormap: concatenates seacolor and landcolor around 0
 	% after interpolation to have exactly one color level per meter.
 	if ~isempty(csea)
