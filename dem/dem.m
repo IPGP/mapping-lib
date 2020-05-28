@@ -772,20 +772,28 @@ if dec || dms
 	
 	if ddx == 0
 		ddx = dtick(diff(xlim),dms);
+		ddxn = 0;
+	else
+		ddxn = double(ddx<0);
+		ddx = abs(ddx);
 	end
 	if ddy == 0
 		ddy = dtick(diff(ylim),dms);
+		ddyn = 0;
+	else
+		ddyn = double(ddy<0);
+		ddy = abs(ddy);
 	end
-	xtick = (ddx*ceil(xlim(1)/ddx)):ddx:xlim(2);
+   	xtick = (ddx*ceil(xlim(1)/ddx)):ddx:xlim(2);
 	for xt = xtick(1:2:end)
 		dt = ddx - max(0,xt + ddx - xlim(2));
 		patch(repmat(xt + dt*[0,1,1,0]',[1,2]),[ylim(1) - bwy*[0,0,1,1];ylim(2) + bwy*[0,0,1,1]]','k','clipping','off')
 		if fs > 0
 			if ~isempty(regexp(tpos,'north','once'))
-				text(xt,ylim(2) + 1.2*bwy,deg2dms(xt,dlon,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xt + dt*ddxn,ylim(2) + 1.2*bwy,deg2dms(xt + dt*ddxn,dlon,dec),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','bottom');
 			else
-				text(xt,ylim(1) - 1.2*bwy,deg2dms(xt,dlon,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xt + dt*ddxn,ylim(1) - 1.2*bwy,deg2dms(xt + dt*ddxn,dlon,dec),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','top');
 			end
 		end
@@ -797,10 +805,10 @@ if dec || dms
 		patch([xlim(1) - bwx*[0,0,1,1];xlim(2) + bwx*[0,0,1,1]]',repmat(yt + dt*[0,1,1,0]',[1,2]),'k','clipping','off')
 		if fs > 0
 			if ~isempty(regexp(tpos,'east','once'))
-				text(xlim(2) + 1.2*bwx,yt,deg2dms(yt,dlat,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xlim(2) + 1.2*bwx,yt + dt*ddyn,deg2dms(yt + dt*ddyn,dlat,dec),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','top','rotation',90);
 			else
-				text(xlim(1) - 1.2*bwx,yt,deg2dms(yt,dlat,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xlim(1) - 1.2*bwx,yt + dt*ddyn,deg2dms(yt + dt*ddyn,dlat,dec),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','bottom','rotation',90);
 			end
 		end
