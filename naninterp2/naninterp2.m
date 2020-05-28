@@ -14,10 +14,10 @@ function z = naninterp2(varargin)
 %
 %	Author: François Beauducel, <beauducel@ipgp.fr>
 %	Created: 2013-01-07, Paris (France)
-%	Updated: 2016-03-27
+%	Updated: 2019-10-28
 
 
-%	Copyright (c) 2016, François Beauducel, covered by BSD License.
+%	Copyright (c) 2019, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 
@@ -43,10 +43,11 @@ function z = naninterp2(varargin)
 %	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
 %	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if nargin ~= 1 && nargin ~= 3
+if nargin <= 1 && nargin >= 4
 	error('Wrong number of arguments.')
 end
 
+n = 0;
 if nargin == 1
 	z = varargin{1};
 	[x,y] = meshgrid(1:size(z,2),1:size(z,1));
@@ -81,8 +82,9 @@ if ~isempty(k)
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function k2 = ind90(sz,k)
-
+% switched i and j: k2 is linear index in row order
+k = max(min(k,prod(sz)),1);
 [i,j] = ind2sub(sz,k);
-k2 = sub2ind(fliplr(sz),j,i); % switched i and j: k2 is linear index in row order
+k2 = sub2ind(fliplr(sz),j,i);
