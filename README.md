@@ -10,6 +10,9 @@ Shaded relief image plot for digital elevation model.
 ### [IBIL](ibil)
 Import ESRI BIL raster binary files.
 
+### [GRD](grd)
+Import and export ESRI/Arcinfo and GS/Surfer ASCII or binary GRD DEM files.
+
 ### [NANINTERP2](naninterp2)
 2-D optimized linear interpolation.
 
@@ -33,7 +36,7 @@ Polarized color map.
 
 
 ## Author
-**François Beauducel**, [IPGP](www.ipgp.fr), [beaudu](https://github.com/beaudu), beauducel@ipgp.fr 
+**François Beauducel**, [IPGP](www.ipgp.fr), [beaudu](https://github.com/beaudu), beauducel@ipgp.fr
 
 ## Documentation
 All functions contain in-line help for syntax and examples.
