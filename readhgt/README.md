@@ -12,9 +12,9 @@ readhgt(48,2)
 ```
 ![Paris, France (SRTM3) obtained with readhgt(48,2)](readhgt_example_paris.png)
 
-- to plot a map of the Misti volcano area, Peru (SRTM1 cropped and interpolated tile):
+- to plot a map of the Misti volcano area, Peru (SRTM1 cropped and interpolated tile). If the tiles are not already available locally, download needs a valid user/password login at NASA/EarthDATA center):
 ```matlab
-readhgt([-16.4,-16.2,-71.5,-71.3],'srtm1','interp')
+readhgt([-16.4,-16.2,-71.5,-71.3],'srtm1','login','usr','pwd','interp')
 ```
 ![Misti volcano,  (SRTM1) obtained with readhgt([-16.4,-16.2,-71.5,-71.3])](readhgt_example_misti.png)
 
@@ -36,7 +36,7 @@ X=readhgt(40:48,-123:-121,'tiles');
 
 
 ## Author
-**François Beauducel**, [IPGP](www.ipgp.fr), [beaudu](https://github.com/beaudu), beauducel@ipgp.fr 
+**François Beauducel**, [IPGP](www.ipgp.fr), [beaudu](https://github.com/beaudu), beauducel@ipgp.fr
 
 ## Documentation
 Type 'doc readhgt' for syntax, help and examples. The function needs the file "readhgt_srtm_index.txt" and get better mapping results with author's dem.m function.
