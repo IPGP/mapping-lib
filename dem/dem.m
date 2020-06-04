@@ -97,6 +97,9 @@ function varargout=dem(x,y,z,varargin)
 %		Activates the 'lake' option only above ZMIN elevations. For 
 %		example, use 'lakezmin',0 to limit lake detection on land.
 %
+%	'Saturation',N
+%		Changes the whole image color saturation by a factor of N.
+%
 %	'Watermark',N
 %		Makes the whole image lighter by a factor of N.
 %
@@ -165,7 +168,7 @@ function varargout=dem(x,y,z,varargin)
 %
 %	--- Informations ---
 %
-%	Colormaps are Mx3 RGB matrix so it is easy to modify saturation 
+%	Colormaps are Mx3 RGB matrix so it is easy to modify contrast 
 %	(CMAP.^N), set darker (CMAP/N), lighter (1 - 1/N + CMAP/N), inverse
 %	it (flipud(CMAP)), etc...
 %
@@ -178,10 +181,13 @@ function varargout=dem(x,y,z,varargin)
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 2007-05-17 in Guadeloupe, French West Indies
-%	Updated: 2019-06-17
+%	Updated: 2020-06-01
 
 %	History:
-%	[2019-06-17]
+%	[2020-06-01] v2.8
+%	    - new option 'saturation' to change colormaps
+%	    - tick label decimals with smaller font size
+%	[2019-06-17] v2.7
 %		- fix an issue for single RGB color in sea/land color option
 %	[2017-03-29] v2.6
 %		- fix in 'lakezmin' option (thanks to Mustafa Çomo?lu)
@@ -397,6 +403,15 @@ end
 nargs = nargs + 2;
 if s==0
 	zratio = 1; % default
+end
+
+% SATURATION param/value
+[s,csat] = checkparam(varargin,'saturation',@isscalar);
+nargs = nargs + 2;
+if s
+	csat = abs(csat);
+else
+	csat = 1; % default
 end
 
 % WATERMARK param/value
@@ -683,9 +698,6 @@ if dz > 0
 		end
 	end
 
-	if wmark
-		I = watermark(I,wmark);
-	end
 	txt = '';
 	
 else
@@ -694,6 +706,20 @@ else
 	cmap = repmat(sea_color,[256,1]);
 	txt = 'Mak Byur!';	% Splash !
 end
+
+% -------------------------------------------------------------------------
+% --- applies saturation and watermark to image and cmap (for legend)
+
+if csat~=1
+	I = saturation(I,csat);
+	cmap = saturation(cmap,csat);
+end
+
+if wmark
+	I = watermark(I,wmark);
+	cmap = watermark(cmap,wmark);
+end
+
 
 % -------------------------------------------------------------------------
 % --- ends the function when 'noplot' option is on
@@ -790,10 +816,10 @@ if dec || dms
 		patch(repmat(xt + dt*[0,1,1,0]',[1,2]),[ylim(1) - bwy*[0,0,1,1];ylim(2) + bwy*[0,0,1,1]]','k','clipping','off')
 		if fs > 0
 			if ~isempty(regexp(tpos,'north','once'))
-				text(xt + dt*ddxn,ylim(2) + 1.2*bwy,deg2dms(xt + dt*ddxn,dlon,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xt + dt*ddxn,ylim(2) + 1.2*bwy,deg2dms(xt + dt*ddxn,dlon,dec,fs),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','bottom');
 			else
-				text(xt + dt*ddxn,ylim(1) - 1.2*bwy,deg2dms(xt + dt*ddxn,dlon,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xt + dt*ddxn,ylim(1) - 1.2*bwy,deg2dms(xt + dt*ddxn,dlon,dec,fs),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','top');
 			end
 		end
@@ -805,10 +831,10 @@ if dec || dms
 		patch([xlim(1) - bwx*[0,0,1,1];xlim(2) + bwx*[0,0,1,1]]',repmat(yt + dt*[0,1,1,0]',[1,2]),'k','clipping','off')
 		if fs > 0
 			if ~isempty(regexp(tpos,'east','once'))
-				text(xlim(2) + 1.2*bwx,yt + dt*ddyn,deg2dms(yt + dt*ddyn,dlat,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xlim(2) + 1.2*bwx,yt + dt*ddyn,deg2dms(yt + dt*ddyn,dlat,dec,fs),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','top','rotation',90);
 			else
-				text(xlim(1) - 1.2*bwx,yt + dt*ddyn,deg2dms(yt + dt*ddyn,dlat,dec),'FontSize',fs,'FontWeight',fw, ...
+				text(xlim(1) - 1.2*bwx,yt + dt*ddyn,deg2dms(yt + dt*ddyn,dlat,dec,fs),'FontSize',fs,'FontWeight',fw, ...
 					'HorizontalAlignment','center','VerticalAlignment','bottom','rotation',90);
 			end
 		end
@@ -850,10 +876,6 @@ wsc = bw0;
 xsc = xlim(2) + wsc*2 + bwx;
 
 if scale
-
-	if wmark
-		cmap = watermark(cmap,wmark);
-	end
 
 	% -- elevation scale (colorbar)
 	zscale = linspace(zmin,zmax,length(cmap))';
@@ -969,11 +991,14 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function s = deg2dms(x,ll,dec)
+function s = deg2dms(x,ll,dec,fs)
 %DEG2DMS Degree/minute/second display
 
+% smaller font for decimals
+fs2 = sprintf('\\fontsize{%d}',round(fs/1.25));
+
 if dec
-	s = sprintf('%7.7g',x);
+	s = regexprep(sprintf('%7.7g',x),'\.(.*)',sprintf('.{%s$1}',fs2));
 else
 	xa = abs(x) + 1/360000;
 	%sd = sprintf('%d%c',floor(xa),176);	% ASCII char 176 is the degree sign
@@ -991,9 +1016,89 @@ else
 			end
 		end
 	end
-	s = [sd,sm,ss,ll{1+int8(x<0)}];
+	s = sd;
+	if ~isempty(sm) || ~isempty(ss)
+		s = [s,'{',fs2,sm,ss,'}'];
+	end
+	s = [s,ll{1+int8(x<0)}];
 end
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function y = watermark(x,n)
+% makes colormap x watermark of ratio n
+if nargin < 2
+	n = 2;
+end
+
+if n == 0
+    y = x;
+else
+    y = (x/n + 1 - 1/n);
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function y=saturation(x,n)
+% changes the color saturation by ratio n
+
+% first needs to convert from RGB to HSV
+if ndims(x) == 3
+	r = x(:,:,1);
+	g = x(:,:,2);
+	b = x(:,:,3);
+	mx = max(x,[],3); % max(r,g,b)
+	mn = min(x,[],3); % min(r,g,b)
+else
+	r = x(:,1);
+	g = x(:,2);
+	b = x(:,3);
+	mx = max(x,[],2); % max(r,g,b)
+	mn = min(x,[],2); % min(r,g,b)
+end
+
+s = zeros(size(r));
+h = zeros(size(r));
+dt = mx - mn;
+v = mx;
+
+k = mx>0 & dt>0;
+if any(k)
+	s(k) = dt(k)./mx(k);
+	kr = (k & mx==r);
+	kg = (k & mx==g);
+	kb = (k & mx==b);
+	h(kr) = mod(60*(g(kr) - b(kr))./dt(kr),360);
+	h(kg) = 60*(b(kg) - r(kg))./dt(kg) + 120;
+	h(kb) = 60*(r(kb) - g(kb))./dt(kb) + 240;
+end
+
+% changes the saturation
+s = s*n;
+s(s>1) = 1;
+
+% converting back from HSV to RGB
+hi = mod(floor(h/60),6);
+f = h/60 - hi;
+l = v.*(1 - s);
+m = v.*(1 - f.*s);
+n = v.*(1 - (1 - f).*s);
+
+% default for hi == 0
+r = v; g = n; b = l;
+
+k = hi==1;
+r(k) = m(k); g(k) = v(k); b(k) = l(k);
+k = hi==2;
+r(k) = l(k); g(k) = v(k); b(k) =n(k);
+k = hi==3;
+r(k) = l(k); g(k) = m(k); b(k) = v(k);
+k = hi==4;
+r(k) = n(k); g(k) = l(k); b(k) = v(k);
+k = hi==5;
+r(k) = v(k); g(k) = l(k); b(k) = m(k);
+
+y = cat(ndims(x),r,g,b);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function z = fillgap(x,y,z)
@@ -1095,20 +1200,6 @@ function y=roundsd(x,n)
 og = 10.^(floor(log10(abs(x)) - n + 1));
 y = round(x./og).*og;
 y(x==0) = 0;
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function y = watermark(x,n)
-
-if nargin < 2
-	n = 2;
-end
-
-if n == 0
-    y = x;
-else
-    y = (x/n + 1 - 1/n);
-end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
