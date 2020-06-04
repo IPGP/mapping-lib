@@ -11,12 +11,12 @@ function egrd(x,y,z,fichier,fmt,ndv)
 %	EGRD(...,NODATA) uses NODATA scalar value for NaN Z-points.
 %
 %	Note: ArcInfo format can be converted into GMT-binary GRD file by
-%	using the command "xyz2grd -E". See Generic Mapping Tools packages at
-%	http://gmt.soest.hawaii.edu/
+%	using the command "xyz2grd -E" or "grdconvert". See Generic Mapping
+%	Tools packages at http://gmt.soest.hawaii.edu/
 %
 %	Author: François Beauducel, Institut de Physique du Globe de Paris
 %	Created: 1996
-%	Updated: 2020-04-26
+%	Updated: 2020-05-30
 
 if nargin < 4 || nargin > 6
 	error('Not enough or to much input argument.')
@@ -91,7 +91,7 @@ switch fmt
 		fprintf(fid,'nrows %d\n',size(z,1));
 		fprintf(fid,'xllcenter %f\n',xlim(1));
 		fprintf(fid,'yllcenter %f\n',ylim(1));
-		if abs(yinc) ~= abs(xinc)
+		if abs(roundsd(yinc,10)) ~= abs(roundsd(xinc,10))
     		fprintf(fid,'dx %g\n',abs(xinc));
     		fprintf(fid,'dy %g\n',abs(yinc));
         else
@@ -123,9 +123,12 @@ switch fmt
 end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function mm=minmax(x)
+mm = [min(x(:)),max(x(:))];
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function mm = minmax(x)
-mm = [min(x(:)),max(x(:))];
-
+function y=roundsd(x,n)
+og = 10.^abs(floor(log10(abs(x)) - n + 1));
+y = round(x./og).*og;
