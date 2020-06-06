@@ -16,7 +16,7 @@ function egrd(x,y,z,fichier,fmt,ndv)
 %
 %	Author: François Beauducel, Institut de Physique du Globe de Paris
 %	Created: 1996
-%	Updated: 2020-05-30
+%	Updated: 2020-06-05
 
 if nargin < 4 || nargin > 6
 	error('Not enough or to much input argument.')
@@ -130,5 +130,11 @@ mm = [min(x(:)),max(x(:))];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function y=roundsd(x,n)
-og = 10.^abs(floor(log10(abs(x)) - n + 1));
-y = round(x./og).*og;
+% this is simplified ROUNDSD function for scalar
+e = floor(log10(abs(x)) - n + 1);
+og = 10^abs(e);
+if e>=0
+	y = round(x/og).*og;
+else
+	y = round(x*og)/og;
+end
