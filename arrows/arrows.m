@@ -1,24 +1,28 @@
-function h=arrows(x,y,l,az,varargin)
-%ARROWS  Generalised 2-D arrows plot
+function varargout=arrows(x,y,l,az,varargin)
+%ARROWS  Generalized 2-D arrows plot
+%	ARROWS(X,Y,L,AZ) or ARROWS(X,Y,L,AZ,'Polar') draws an arrow on the
+%	current axis at position X,Y with length L and azimuth AZ (in degrees,
+%	clockwise from positive Y-axis direction).
 %
-%	ARROWS(X,Y,L,AZ) draws an arrow on current axis from position X,Y with 
-%	length L, oriented with azimuth AZ (in degree, AZ = 0 means an arrow 
-%	pointing to positive Y-axis direction, rotating clockwise).
-%       
-%	X and Y can be scalars or matrix. In the last case, any or both L and
-%	AZ can be scalars or matrix of the same size as X and Y.
+%	ARROWS(X,Y,U,V,'Cartesian') uses arrows cartesian components U,V
+%	instead of length/azimuth. This is an equivalent of QUIVER(X,Y,U,V,0).
+%
+%	ARROWS(X,Y,R,AZ,'Loop') draws a clockwise loop arrow of radius R and 
+%	offset azimuth angle AZ (in degrees). Use negative value of R for a
+%	counter clockwise loop.
+%
+%	X and Y can be scalars or matrix. In the last case, ARROWS will draw as
+%	many arrows as elements of X and Y. Any or both pairs of parameters 
+%	L/AZ, U/V or R/AZ can be scalars or matrix of the same size as X and Y.
 %
 %	ARROWS(...,SHAPE) uses relative ratios SHAPE = [HEADW,HEADL,HEADI,LINEW]
 %	to adjust head width HEADW, head length HEADL, head inside length HEADI,
-%	and segment line width LINEW for an arrow length of 1 (default is 
-%	SHAPE = [0.2,0.2,0.15,0.05]).
+%	and segment line width LINEW for an arrow length of 1 or 2*PI for the
+%	'Loop' type. Default is SHAPE = [0.2,0.2,0.15,0.05].
 %
-%	ARROWS(X,Y,U,V,...,'Cartesian') uses arrows cartesian components U,V
-%	instead of length/azimuth. This is an equivalent of QUIVER(X,Y,U,V,0).
-%
-%	ARROWS(...,'Ref',R) defines the length R for which SHAPE reference
-%	parameters applies. Other lengths will be adjusted keeping the arrow's
-%	header size and line width the same.
+%	ARROWS(...,'Ref',R) defines a reference length R for which SHAPE
+%	parameters applies. Any other lengths will keep the arrow's header size
+%	and line width as for the reference.
 %
 %	ARROWS(...,'param1',value1,'param2',value2,...) specifies any
 %	additionnal properties of the Patch using standard parameter/value
@@ -41,15 +45,16 @@ function h=arrows(x,y,l,az,varargin)
 %	- Arrow shape supposes an equal aspect ratio (axis equal).
 %	- To define an arrow without segment line, set HEADI = 1, LINEW = 0,
 %	  and adjust other shape parameters, e.g., a triangle is defined by
-%	  SHAPE = [0.5,1,1,0], while a "wind arrow" is [1,1.5,1,0]
+%	  SHAPE = [0.5,1,1,0], while a "wind arrow" is [1,1.5,1,0].
+%	- To make arrows in 3-D, use the powerful Matlab's function ROTATE.
 %
 %       See also PATCH, QUIVER.
 %
-%	Author: Francois Beauducel <beauducel@ipgp.fr>
+%	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 1995-02-03
-%	Updated: 2013-03-16
+%	Updated: 2020-06-11
 
-%	Copyright (c) 2013, François Beauducel, covered by BSD License.
+%	Copyright (c) 2020, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 
@@ -78,11 +83,37 @@ if nargin < 4
 	error('Not enough input arguments.')
 end
 
-if ~isnumeric(x) | ~isnumeric(y) | ~isnumeric(l) | ~isnumeric(az)
-	error('X,Y,L and AZ must be numeric.')
+if ~isnumeric(x) || ~isnumeric(y) || ~isnumeric(l) || ~isnumeric(az)
+	error('X, Y, L/AZ, U/V or R/AZ must be numeric.')
 end
 
-if nargin > 4 & isnumeric(varargin{1})
+n = max([numel(x) numel(y) numel(l) numel(az)]);	% max size of arguments
+
+% default arrow shape
+shape = [.2 .2 .15 .05];
+
+% checks the arrow type
+types = {'polar','cartesian','loop'};
+
+type = 'polar'; % default arrow type
+for i = 1:length(types)
+	k = strcmpi(varargin,types{i});
+	if any(k)
+		type = types{i};
+		varargin(k) = [];
+	end
+end
+
+% reference length option
+k = find(strcmpi(varargin,'ref'));
+if ~isempty(k) && nargin>4+k
+	refl = varargin{k+1};
+	varargin(k+[0,1]) = [];
+else
+	refl = 0;
+end
+
+if ~isempty(varargin) && isnumeric(varargin{1})
 	shape = varargin{1}(:)';
 	if numel(shape) ~= 4
 		error('SHAPE argument must be a 4-scalar vector.')
@@ -90,32 +121,26 @@ if nargin > 4 & isnumeric(varargin{1})
 
 	% this adjusts head drawing for HEADI = 0 and LINEW > 0
 	shape(3) = max(shape(3),shape(4)*shape(2)/shape(1));
-
 	varargin = varargin(2:end);
-else
-	shape = [.2 .2 .15 .05];
 end
 
-[s,cart,varargin] = checkparam(varargin,'cartesian','option');
-if ~s
-	cart = 0;
-end
-[s,refl,varargin] = checkparam(varargin,'ref','isscalar');
-if ~s
-	refl = 0;
-end
+mline = 2;
 
-if cart
-	% cartesian components: converts to AZ,L
-	[az,l] = cart2pol(l,az);
-	az = pi/2 - az;
-else
-	% converts AZ in degrees to radians
-	az = az*pi/180;
+switch type
+	case 'loop'
+		mline = 50; % additionnal line points for loop arrow
+		az = az*pi/180;
+		shape(2:3) = shape(2:3)/(2*pi);
+	case 'cartesian'
+		% converts U,V to AZ,L
+		[az,l] = cart2pol(l,az);
+		az = pi/2 - az;
+	otherwise
+		az = az*pi/180;
 end
 
-
-m = 8; % length of arrow points (see fx vector below)
+% total number of arrow points (see fx vector below)
+m = 4 + 2*mline;
 
 % needs to duplicate non-scalar arguments
 x = repval(x,m);
@@ -123,13 +148,8 @@ y = repval(y,m);
 l = repval(l,m);
 az = repval(az,m);
 
-n = max([size(x,2) size(y,2) size(l,2) size(az,2)]);	% max size of arguments
-
 if refl
-	if size(l,1) == 1
-		l = repmat(l,[m,n]);
-	end
-	s = refl*(1./l(1,:)')*shape;
+	s = refl*(1./abs(l(1,:))')*shape;
 	s(isinf(s)) = 0;	% because 0-length arrows produced Inf shape elements...
 else
 	s = repmat(shape,[n,1]);
@@ -137,16 +157,28 @@ end
 
 v0 = zeros(n,1);
 v1 = ones(n,1);
+vl = linspace(0,1,mline);
 
-fx = [s(:,4)*[.5 -.5 -.5] s(:,1)*[-.5 0 .5] s(:,4)*[.5 .5]]';
-fy = [v0 v0 (1 - s(:,3)) (1 - s(:,2)) v1 (1 - s(:,2)) (1 - s(:,3)) v0]';
+% unit length arrow patch
+fx = [s(:,4)*[.5 -.5*ones(1,mline)] s(:,1)*[-.5 0 .5] s(:,4)*.5*ones(1,mline)]';
+fy = [v0 (1 - s(:,3))*vl (1 - s(:,2)) v1 (1 - s(:,2)) (1 - s(:,3))*fliplr(vl)]';
+
+switch type
+	case 'loop'
+		th = pi/2 - fy*7*pi/4 - az; % arrow length converted to 7/8 angle loop 
+		px = l.*(cos(th) + fx.*cos(th));
+		py = l.*(sin(th) + fx.*sin(th));
+	otherwise
+		px = l.*(-fx.*cos(az) + fy.*sin(az));
+		py = l.*(fx.*sin(az) + fy.*cos(az));
+end
 
 % the beauty of this script: a single patch command to draw all the arrows !
-hh = patch(-fx.*l.*cos(az) + fy.*l.*sin(az) + x,fx.*l.*sin(az) + fy.*l.*cos(az) + y,'k',varargin{:});
+h = patch(px + x,py + y,'k',varargin{:});
 
 	
 if nargout > 0
-	h = hh;
+	varargout{1} = h;
 end
 
 
@@ -157,35 +189,3 @@ function x = repval(x,n)
 if numel(x) > 1
 	x = repmat(x(:)',[n,1]);
 end
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [s,v,arg] = checkparam(arg,nam,typ)
-
-switch typ
-	case 'isscalar'
-		mes = 'scalar value';
-	otherwise
-		mes = 'value';
-end
-
-s = 0;
-v = [];
-k = find(strcmpi(arg,nam));
-if ~isempty(k)
-	if strcmp(typ,'option')
-		v = 1;
-		arg(k) = [];
-		s = 1;
-	else
-		if (k + 1) <= length(arg) & isnumeric(arg{k+1}) & feval(typ,arg{k+1})
-			v = arg{k+1};
-			arg(k:(k+1)) = [];
-			s = 2;
-		else
-			error('%s option must be followed by a valid %s.',upper(nam),mes)
-		end
-	end
-end
-
