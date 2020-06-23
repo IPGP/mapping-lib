@@ -54,7 +54,7 @@ function varargout=arrows(x,y,l,az,varargin)
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 1995-02-03
-%	Updated: 2020-06-22
+%	Updated: 2020-06-23
 
 %	Copyright (c) 2020, François Beauducel, covered by BSD License.
 %	All rights reserved.
@@ -189,7 +189,7 @@ switch type
 end
 
 % the beauty of this script: a single patch command to draw all the arrows !
-h = patch(px + x,py + y,'k',varargin{:});
+h = patch(px + x,sign(l).*py + y,'k',varargin{:});
 	
 if nargout > 0
 	varargout{1} = h;
