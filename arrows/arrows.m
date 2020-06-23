@@ -7,8 +7,8 @@ function varargout=arrows(x,y,l,az,varargin)
 %	ARROWS(X,Y,U,V,'Cartesian') uses arrows cartesian components U,V
 %	instead of length/azimuth. This is an equivalent of QUIVER(X,Y,U,V,0).
 %
-%	ARROWS(X,Y,R,AZ,'Loop') draws a clockwise loop arrow of radius R and 
-%	offset azimuth angle AZ (in degrees). Use negative value of R for a
+%	ARROWS(X,Y,R,AZ,'Loop') draws a clockwise 3/4 loop arrow of radius R 
+%	and offset azimuth angle AZ (in degrees). Use negative value of R for a
 %	counter clockwise loop.
 %
 %	X and Y can be scalars or matrix. In the last case, ARROWS will draw as
@@ -36,6 +36,8 @@ function varargout=arrows(x,y,l,az,varargin)
 %
 %	  arrows(1,0,1,0,[.2,.4,.2,.02])
 %
+%	  arrows(0,0,-1,45,'Loop')
+%
 %	  [xx,yy] = meshgrid(1:10);
 %	  arrows(xx,yy,rand(size(xx)),360*rand(size(xx)))
 %
@@ -52,7 +54,7 @@ function varargout=arrows(x,y,l,az,varargin)
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 1995-02-03
-%	Updated: 2020-06-11
+%	Updated: 2020-06-22
 
 %	Copyright (c) 2020, François Beauducel, covered by BSD License.
 %	All rights reserved.
@@ -92,6 +94,9 @@ n = max([numel(x) numel(y) numel(l) numel(az)]);	% max size of arguments
 % default arrow shape
 shape = [.2 .2 .15 .05];
 
+% loop arrow length
+loopl = 7*pi/4;
+
 % checks the arrow type
 types = {'polar','cartesian','loop'};
 
@@ -130,7 +135,7 @@ switch type
 	case 'loop'
 		mline = 50; % additionnal line points for loop arrow
 		az = az*pi/180;
-		shape(2:3) = shape(2:3)/(2*pi);
+		shape(2:3) = shape(2:3)/loopl;
 	case 'cartesian'
 		% converts U,V to AZ,L
 		[az,l] = cart2pol(l,az);
@@ -142,12 +147,13 @@ end
 % total number of arrow points (see fx vector below)
 m = 4 + 2*mline;
 
-% needs to duplicate non-scalar arguments
-x = repval(x,m);
-y = repval(y,m);
-l = repval(l,m);
-az = repval(az,m);
+% needs to duplicate arguments
+x = repmat(x(:)',[m,1]);
+y = repmat(y(:)',[m,1]);
+l = repmat(l(:)',[m,1]);
+az = repmat(az(:)',[m,1]);
 
+% s is a matrix of shape vectors
 if refl
 	s = refl*(1./abs(l(1,:))')*shape;
 	s(isinf(s)) = 0;	% because 0-length arrows produced Inf shape elements...
@@ -160,14 +166,23 @@ v1 = ones(n,1);
 vl = linspace(0,1,mline);
 
 % unit length arrow patch
-fx = [s(:,4)*[.5 -.5*ones(1,mline)] s(:,1)*[-.5 0 .5] s(:,4)*.5*ones(1,mline)]';
-fy = [v0 (1 - s(:,3))*vl (1 - s(:,2)) v1 (1 - s(:,2)) (1 - s(:,3))*fliplr(vl)]';
+fx = [s(:,1)*[-.5  0  .5]          s(:,4)*.5*[ones(1,mline) 1 -ones(1,mline)]]';
+fy = [(1 - s(:,2)) v1 (1 - s(:,2)) (1 - s(:,3))*fliplr(vl) v0 (1 - s(:,3))*vl]';
 
 switch type
 	case 'loop'
-		th = pi/2 - fy*7*pi/4 - az; % arrow length converted to 7/8 angle loop 
-		px = l.*(cos(th) + fx.*cos(th));
-		py = l.*(sin(th) + fx.*sin(th));
+		th = pi/2 - fy*loopl - az; % arrow length converted to angle loop 
+		px = l.*cos(th).*(1 + fx);
+		py = l.*sin(th).*(1 + fx);
+		% head must be redrawn to avoid distortion...
+		kh = 1:3; % indexes of the head's 3-points to be moved
+		xh = -l(kh,:).*flipud(fx(kh,:));
+		yh = -l(kh,:).*((s(:,3) - [s(:,2) v0 s(:,2)])')*loopl;
+		a0 = repmat(th(4,:),3,1); % head rotation angle
+		% rotates and tranlates the head at the right position
+		px(kh,:) = cos(a0).*xh - sin(a0).*yh + repmat(mean(px([4,end],:)),3,1);
+		py(kh,:) = sin(a0).*xh + cos(a0).*yh + repmat(mean(py([4,end],:)),3,1);
+		
 	otherwise
 		px = l.*(-fx.*cos(az) + fy.*sin(az));
 		py = l.*(fx.*sin(az) + fy.*cos(az));
@@ -175,17 +190,7 @@ end
 
 % the beauty of this script: a single patch command to draw all the arrows !
 h = patch(px + x,py + y,'k',varargin{:});
-
 	
 if nargout > 0
 	varargout{1} = h;
-end
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function x = repval(x,n)
-
-if numel(x) > 1
-	x = repmat(x(:)',[n,1]);
 end
