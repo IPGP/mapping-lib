@@ -13,8 +13,8 @@ Import ESRI BIL raster binary files.
 ### [GRD](grd)
 Import and export ESRI/Arcinfo and GS/Surfer ASCII or binary GRD DEM files.
 
-### [NANINTERP2](naninterp2)
-2-D optimized linear interpolation.
+### [NANINTERP2](https://github.com/beaudu/naninterp2)
+2-D optimized linear interpolation (fill gaps).
 
 ### [LL2UTM and UTM2LL](latlonutm)
 Latitude/longitude to and from UTM coordinates precise and vectorized conversion.
