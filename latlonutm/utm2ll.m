@@ -1,13 +1,17 @@
 function [lat,lon]=utm2ll(x,y,f,datum,varargin)
 %UTM2LL UTM to Lat/Lon coordinates precise conversion.
-%	[LAT,LON]=UTM2LL(X,Y,ZONE) converts UTM coordinates X,Y (in meters)
-%	defined in the UTM ZONE (integer) to latitude LAT and longitude LON 
-%	(in degrees). Default datum is WGS84.
+%	[LAT,LON]=UTM2LL(E,N,ZONE) converts UTM coordinates eastern E, northern
+%	N (in meters) defined in the UTM zone ZONE (integer) to latitude LAT 
+%	and longitude LON (in degrees). Default datum is WGS84.
 %
-%	X, Y and F can be scalars, vectors or matrix. Outputs LAT and LON will
-%	have the same size as inputs.
+%	E, N and ZONE can be scalars, vectors or matrix. Outputs LAT and LON 
+%	will have the same size as inputs.
 %
-%	For southern hemisphere points, use negative zone -ZONE.
+%	ZONE can be integer, in such case use negative value -ZONE for southern
+%	hemisphere points. ZONE can be also a string, or a cell of strings,
+%	using the military grid reference system (MGRS) notation, i.e., 
+%	concatenating zone and latitude band letter; the latitude band will be
+%	used only to determine the hemisphere.
 %
 %	UTM2LL(X,Y,ZONE,DATUM) uses specific DATUM for conversion. DATUM can be
 %	a string in the following list:
@@ -23,6 +27,7 @@ function [lat,lon]=utm2ll(x,y,f,datum,varargin)
 %	Notice:
 %		- UTM2LL does not perform cross-datum conversion.
 %		- precision is near a millimeter.
+%		- The polar regions south of 80°S and north of 84°N are excluded. 
 %
 %
 %	Reference:
@@ -31,14 +36,16 @@ function [lat,lon]=utm2ll(x,y,f,datum,varargin)
 %
 %	Author: Francois Beauducel, <beauducel@ipgp.fr>
 %	Created: 2001-08-23
-%	Updated: 2019-05-29
+%	Updated: 2020-08-19
 
 %	Revision history:
 %
+%	[2020-08-19]
+%	  - adds MGRS notation for UTM zone and latitude band.
 %	[2019-05-29]
 %	  - fix an issue when X or Y are matrices.
 
-%	Copyright (c) 2001-2019, François Beauducel, covered by BSD License.
+%	Copyright (c) 2001-2020, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 

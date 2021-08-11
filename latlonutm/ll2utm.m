@@ -1,9 +1,10 @@
 function [x,y,f]=ll2utm(varargin)
 %LL2UTM Lat/Lon to UTM coordinates precise conversion.
-%	[X,Y]=LL2UTM2(LAT,LON) or LL2UTM([LAT,LON]) converts coordinates 
-%	LAT,LON (in degrees) to UTM X and Y (in meters). Default datum is WGS84.
+%	[E,N]=LL2UTM2(LAT,LON) or LL2UTM([LAT,LON]) converts coordinates 
+%	latitude LAT, longitude LON (in degrees) to UTM eastern E and northern 
+%	N (in meters). Default datum is WGS84.
 %
-%	LAT and LON can be scalars, vectors or matrix. Outputs X and Y will
+%	LAT and LON can be scalars, vectors or matrix. Outputs E and N will
 %	have the same size as inputs.
 %
 %	LL2UTM(...,DATUM) uses specific DATUM for conversion. DATUM can be one
@@ -20,12 +21,12 @@ function [x,y,f]=ll2utm(varargin)
 %	LL2UTM(...,ZONE) forces the UTM ZONE (scalar integer or same size as
 %   LAT and LON) instead of automatic set.
 %
-%	[X,Y,ZONE]=LL2UTM(...) returns also the computed UTM ZONE (negative
+%	[E,N,ZONE]=LL2UTM(...) returns also the computed UTM ZONE (negative
 %	value for southern hemisphere points).
 %
 %
-%	XY=LL2UTM(...) or without any output argument returns a 2-column 
-%	matrix [X,Y].
+%	EN=LL2UTM(...) or without any output argument returns a 2-column 
+%	matrix [E,N].
 %
 %	Note:
 %		- LL2UTM does not perform cross-datum conversion.
