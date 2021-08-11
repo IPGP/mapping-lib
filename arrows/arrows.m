@@ -17,8 +17,11 @@ function varargout=arrows(x,y,l,az,varargin)
 %
 %	ARROWS(...,SHAPE) uses relative ratios SHAPE = [HEADW,HEADL,HEADI,LINEW]
 %	to adjust head width HEADW, head length HEADL, head inside length HEADI,
-%	and segment line width LINEW for an arrow length of 1 or 2*PI for the
-%	'Loop' type. Default is SHAPE = [0.2,0.2,0.15,0.05].
+%	and segment line width LINEW for an arrow length of 1. Default is 
+%	SHAPE = [0.2,0.2,0.15,0.05].
+%	For the 'Loop' arrow type, the reference length for SHAPE parameters is
+%	not 1 but 2*PI. An additional parameter can be specified as the total 
+%	angle of rotation (in degree, default is 315°): SHAPE = [...,AROT].
 %
 %	ARROWS(...,'Ref',R) defines a reference length R for which SHAPE
 %	parameters applies. Any other lengths will keep the arrow's header size
@@ -43,12 +46,13 @@ function varargout=arrows(x,y,l,az,varargin)
 %
 %
 %	Notes:
-%
 %	- Arrow shape supposes an equal aspect ratio (axis equal).
 %	- To define an arrow without segment line, set HEADI = 1, LINEW = 0,
 %	  and adjust other shape parameters, e.g., a triangle is defined by
 %	  SHAPE = [0.5,1,1,0], while a "wind arrow" is [1,1.5,1,0].
-%	- To make arrows in 3-D, use the powerful Matlab's function ROTATE.
+%	- To make a two-ends arrow, use AZ=[0,180] in the 'Polar' default mode.
+%	- To make arrows oriented in 3-D, use the powerful Matlab's function
+%	  ROTATE.
 %
 %       See also PATCH, QUIVER.
 %
@@ -91,11 +95,8 @@ end
 
 n = max([numel(x) numel(y) numel(l) numel(az)]);	% max size of arguments
 
-% default arrow shape
-shape = [.2 .2 .15 .05];
-
-% loop arrow length
-loopl = 7*pi/4;
+% default arrow shape: HeadWidth, HeadLength, HeadInsideLength, LineWidth, LoopAngle
+shape = [.2 .2 .15 .05 315];
 
 % checks the arrow type
 types = {'polar','cartesian','loop'};
@@ -119,10 +120,10 @@ else
 end
 
 if ~isempty(varargin) && isnumeric(varargin{1})
-	shape = varargin{1}(:)';
-	if numel(shape) ~= 4
-		error('SHAPE argument must be a 4-scalar vector.')
+	if all(numel(varargin{1}) ~= [4,5])
+		error('SHAPE argument must be a 4 or 5-scalar vector.')
 	end
+	shape(1:length(varargin{1})) = varargin{1}(:)';
 
 	% this adjusts head drawing for HEADI = 0 and LINEW > 0
 	shape(3) = max(shape(3),shape(4)*shape(2)/shape(1));
@@ -130,6 +131,7 @@ if ~isempty(varargin) && isnumeric(varargin{1})
 end
 
 mline = 2;
+loopl = shape(5)*pi/180;
 
 switch type
 	case 'loop'
