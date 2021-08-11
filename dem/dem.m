@@ -100,6 +100,9 @@ function varargout=dem(x,y,z,varargin)
 %	'Saturation',N
 %		Changes the whole image color saturation by a factor of N.
 %
+%	'GrayScale'
+%		Converts the used colormap(s) to grayscale (colour-blind).
+%
 %	'Watermark',N
 %		Makes the whole image lighter by a factor of N.
 %
@@ -128,7 +131,7 @@ function varargout=dem(x,y,z,varargin)
 %		produce correct data scaling at print (but not necessarily at 
 %		screen). The 'off' mode disables any scaling.
 %
-%	Additionnal options for basemap CARTESIAN or LATLON:
+%	Additionnal options for basemap CARTESIAN, LATLON, and LEGEND:
 %
 %	'BorderWidth',BW
 %		Border width of the basemap axis, in % of axis height. Default is
@@ -149,6 +152,9 @@ function varargout=dem(x,y,z,varargin)
 %		Position of the tick labels: 'southwest' (default), 'southeast',
 %		'northwest','northeast'
 %
+%	'ZUnit',ZU
+%		Sets the elevation unit as string ZU, used when min/max values are
+%		indicated on colorbar legend (default is 'm').
 %
 %	--- Decimation options ---
 %
@@ -181,9 +187,15 @@ function varargout=dem(x,y,z,varargin)
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
 %	Created: 2007-05-17 in Guadeloupe, French West Indies
-%	Updated: 2020-06-01
+%	Updated: 2021-01-08
 
 %	History:
+%	[2021-01-08] v2.11
+%		- minor optimization for 'interp' option
+%	[2020-11-29] v2.10
+%		- new option 'grayscale'
+%	[2020-11-25] v2.9
+%		- fix a possible issue with saturation under Matlab < 2014
 %	[2020-06-01] v2.8
 %	    - new option 'saturation' to change colormaps
 %	    - tick label decimals with smaller font size
@@ -291,6 +303,12 @@ end
 
 if length(x) ~= size(z,2) || length(y) ~= size(z,1)
 	error('If Z has a size of [M,N], X must have a length of N, and Y a length of M.')
+end
+
+if size(z,3) == 3
+	rgb = true;
+else
+	rgb = false;
 end
 
 % OPTIONS and PARAM/VALUE arguments
@@ -478,6 +496,13 @@ if s==0
 	tpos = 'southwest'; % default
 end
 
+% ZUNIT param/value
+[s,zunit] = checkparam(varargin,'zunit',@ischar);
+nargs = nargs + 2;
+if s==0
+	zunit = 'm'; % default
+end
+
 % AXISEQUAL param/value
 [s,axeq] = checkparam(varargin,'axisequal',@ischar,{'auto','manual','off'});
 nargs = nargs + 2;
@@ -488,6 +513,20 @@ end
 % CROP param/value
 [s,crop] = checkparam(varargin,'crop',@isvec,4);
 nargs = nargs + 2;
+
+% CLRGB param/value
+[s,clrgb] = checkparam(varargin,'CLRGB',@isrgb);
+nargs = nargs + 2;
+if s==0
+	clrgb = .5*ones(1,3); % default (mid-grey)
+end
+
+% CLLEVEL param/value
+[s,cllevel] = checkparam(varargin,'CLLevel',@isvec,1:2);
+nargs = nargs + 2;
+if s==0
+	cllevel = [0 0]; % default (auto)
+end
 
 % options without argument value
 km = any(strcmpi(varargin,'km'));
@@ -500,10 +539,11 @@ lake = any(strcmpi(varargin,'lake')) || lake;
 fbold = any(strcmpi(varargin,'fontbold'));
 noplot = any(strcmpi(varargin,'noplot'));
 clines = any(strcmpi(varargin,'contourlines'));
+gscale = any(strcmpi(varargin,'grayscale'));
 
 
 % for backward compatibility (former syntax)...
-nargs = nargs + dec + dms + scale + kmscale + inter + lake + km + fbold + noplot + clines;
+nargs = nargs + dec + dms + scale + kmscale + inter + lake + km + fbold + noplot + clines + gscale;
 
 if (nargin - nargs) > 3 && ~isempty(varargin{1})
 	opt = varargin{1};
@@ -563,7 +603,7 @@ if numel(crop)==4
 	ky = find(y >= crop(3) & y <= crop(4));
 	x = x(kx);
 	y = y(ky);
-	z = z(ky,kx);
+	z = z(ky,kx,:);
 end
 
 % decimates data to avoid disk swap/out of memory...
@@ -576,7 +616,7 @@ end
 if n > 1
 	x = x(1:n:end);
 	y = y(1:n:end);
-	z = z(1:n:end,1:n:end);
+	z = z(1:n:end,1:n:end,:);
 	fprintf('DEM: data has been decimated by a factor of %d...\n',n);
 end
 
@@ -607,14 +647,14 @@ if decim && n < 0
 	fprintf('DEM: data has been oversampled by a factor of %d...\n',-n);
 end
 
-if inter
+if ~rgb && inter
 	z = fillgap(x,y,z);
 end
 
 % -------------------------------------------------------------------------
 % --- Process lighting
 
-if dz > 0
+if ~rgb && dz > 0
 	% first check if colormaps have the minimum required size
 	if size(csea,1) < 2
 		csea = repmat(csea,256,1);
@@ -700,15 +740,23 @@ if dz > 0
 
 	txt = '';
 	
+elseif rgb
+	I = z;
+	txt = '';
+
 else
-	
 	I = repmat(shiftdim(sea_color,-1),size(z));
 	cmap = repmat(sea_color,[256,1]);
 	txt = 'Mak Byur!';	% Splash !
 end
 
 % -------------------------------------------------------------------------
-% --- applies saturation and watermark to image and cmap (for legend)
+% --- applies saturation, grayscale and watermark to image and cmap (for legend)
+
+if gscale
+	I = rgb2gray(I);
+	cmap = rgb2gray(cmap);
+end
 
 if csat~=1
 	I = saturation(I,csat);
@@ -724,7 +772,7 @@ end
 % -------------------------------------------------------------------------
 % --- ends the function when 'noplot' option is on
 if noplot
-	varargout{1} = struct('x',x,'y',y,'z',z,'rgb',I);
+	varargout{1} = struct('x',x,'y',y,'z',z,'rgb',I,'cmap',cmap);
 	return
 end
 
@@ -849,13 +897,22 @@ if clines
 	dz = diff(zlim);
 	% empirical ratio between horizontal extent and elevation interval (dz)
 	%rzh = dz/min(diff(x([1,end]))*cosd(mean(dlat)),diff(y([1,end])))/degkm/4e2;
-	dd = dtick(dz);
+	% major level lines
+	if cllevel(1)==0
+		dd = dtick(dz);
+	else
+		dd = abs(cllevel(1));
+	end
 	dz0 = ceil(zlim(1)/dd)*dd:dd:floor(zlim(2)/dd)*dd;
 	dz0(ismember(0,dz0)) = [];	% eliminates 0 value
-	dd = dtick(dz/5);
+	% minor level lines
+	if numel(cllevel)<2 || cllevel(2)==0
+		dd = dtick(dz/5);
+	else
+		dd = abs(cllevel(2));
+	end
 	dz1 = ceil(zlim(1)/dd)*dd:dd:floor(zlim(2)/dd)*dd;
 	dz1(ismember(dz1,dz0)) = [];	% eliminates minor ticks in major ticks
-	clrgb = .3*ones(1,3);
 	hold on
 	[~,h] = contour(x,y,z,[0,0,dz1],'-','Color',clrgb);
 	set(h,'LineWidth',0.1);
@@ -890,9 +947,9 @@ if scale
 	text(xsc + 2*wsc + zeros(size(ztick)),ysc + (ztick - zscale(1))*0.5*diff(ylim)/diff(zscale([1,end])),num2str(ztick'), ...
 		'HorizontalAlignment','left','VerticalAlignment','middle','FontSize',fs*.75)
 	% indicates min and max Z values
-	text(xsc,ysc - bwy/2,sprintf('%g m',roundsd(zlim(1),3)),'FontWeight','bold', ...
+	text(xsc,ysc - bwy/2,sprintf('%g %s',roundsd(zlim(1),3),zunit),'FontWeight','bold', ...
 		'HorizontalAlignment','left','VerticalAlignment','top','FontSize',fs*.75)
-	text(xsc,ysc + .5*diff(ylim) + bwy/2,sprintf('%g m',roundsd(zlim(2),3)),'FontWeight','bold', ...
+	text(xsc,ysc + .5*diff(ylim) + bwy/2,sprintf('%g %s',roundsd(zlim(2),3),zunit),'FontWeight','bold', ...
 		'HorizontalAlignment','left','VerticalAlignment','bottom','FontSize',fs*.75)
 	
 	% frees axes only if not hold on
@@ -1063,7 +1120,7 @@ dt = mx - mn;
 v = mx;
 
 k = mx>0 & dt>0;
-if any(k)
+if any(k(:))
 	s(k) = dt(k)./mx(k);
 	kr = (k & mx==r);
 	kg = (k & mx==g);
@@ -1073,7 +1130,7 @@ if any(k)
 	h(kb) = 60*(r(kb) - g(kb))./dt(kb) + 240;
 end
 
-% changes the saturation
+% changes the saturation channel
 s = s*n;
 s(s>1) = 1;
 
@@ -1100,25 +1157,33 @@ r(k) = v(k); g(k) = l(k); b(k) = m(k);
 
 y = cat(ndims(x),r,g,b);
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function y=rgb2gray(x)
+% removes color information
+
+if ndims(x) == 3
+	y = repmat(0.2989*x(:,:,1) + 0.5870*x(:,:,2) + 0.1140*x(:,:,3),1,1,3);
+else
+	y = repmat(0.2989*x(:,1) + 0.5870*x(:,2) + 0.1140*x(:,3),1,3);
+end
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function z = fillgap(x,y,z)
-% GRIDDATA is not efficient for large arrays, but has great advantage to be
-% included in Matlab's core functions! To optimize interpolation, we
-% reduce the amount of relevant data by building a mask of all surrounding
-% pixels of novalue areas... playing with linear index!
+% This function reproduces the core of NANINTERP2
 
 sz = size(z);
 k = find(isnan(z));
 k(k == 1 | k == numel(z)) = []; % removes first and last index (if exist)
 if ~isempty(k)
 	[xx,yy] = meshgrid(x,y);
-	mask = zeros(sz,'int8');
+	mask = false(sz);
 	k2 = ind90(sz,k); % k2 is linear index in the row order
 	% sets to 1 every previous and next index, both in column and row order
-	mask([k-1;k+1;ind90(fliplr(sz),[k2-1;k2+1])]) = 1; 
-	mask(k) = 0; % removes the novalue index
-	kb = find(mask); % keeps only border values
-	z(k) = griddata(xx(kb),yy(kb),z(kb),xx(k),yy(k));
+	mask([k-1;k+1;ind90(fliplr(sz),[k2-1;k2+1])]) = true; 
+	mask(k) = false; % removes the novalue index
+	z(k) = griddata(xx(mask),yy(mask),z(mask),xx(k),yy(k));
 end
 
 
@@ -1187,7 +1252,7 @@ function s = isvec(x,n)
 if nargin < 2
 	n = 2;
 end
-if isnumeric(x) && numel(x) == n
+if isnumeric(x) && (nargin > 1 && any(numel(x) == n) || numel(x) > 1)
 	s = 1;
 else
 	s = 0;
