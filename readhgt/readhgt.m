@@ -2,22 +2,22 @@ function varargout = readhgt(varargin)
 %READHGT Import/download NASA SRTM data files (.HGT).
 %	READHGT(AREA) where AREA is a 4-element vector [LAT1,LAT2,LON1,LON2]
 %	downloads the SRTM data and plots a map corresponding to the geographic
-%	area defined by latitude and longitude limits (in decimal degrees). If 
-%	the needed SRTM .hgt files are not found in the current directory (or 
+%	area defined by latitude and longitude limits (in decimal degrees).
+%	Upper-right coordinates limits (LAT2,LON2) are excluded.
+%	If the needed SRTM .hgt files are not found in the current directory (or 
 %	in the path), they are downloaded from the USGS data server (needs an 
 %	Internet connection and a companion file "readhgt_srtm_index.txt"). For
 %	better plot results, it is recommended to install DEM personal function
 %	available at author's Matlab page. 
 %
 %	READHGT(LAT,LON) reads or downloads the SRTM tiles corresponding to LAT
-%	and LON (in decimal degrees) coordinates (lower-left corner).
+%	and LON (in decimal degrees) coordinates (lower-left corner). LAT and/or
+%	LON can be vectors: in that case, tiles corresponding to all possible 
+%	combinations of LAT and LON values will be downloaded, and optional 
+%	output structure X will have as much elements as tiles.
 %
-%	LAT and/or LON can be vectors: in that case, tiles corresponding to all
-%	possible combinations of LAT and LON values will be downloaded, and
-%	optional output structure X will have as much elements as tiles.
-%
-%	READHGT(FILENAME) reads HGT data file FILENAME, must be in the form
-%	"[N|S]yy[E|W]xxx.hgt[.zip]", as downloaded from SRTM data servers.
+%	READHGT(FILENAME) reads single .hgt data file FILENAME, must be in the
+%	form "[N|S]yy[E|W]xxx.hgt[.zip]", as downloaded from SRTM data servers.
 %
 %	X=READHGT(...) returns a structure X containing: 
 %		lat: coordinate vector of latitudes (decimal degree)
@@ -79,26 +79,30 @@ function varargout = readhgt(varargin)
 %
 %	'wget'
 %	   Will use external command wget to download the files (for Linux and
-%	   MacOSX systems). For MacOSX, wget must be installed using homebrew,
-%	   macports, fink or compiling from sources.
-%	   ! NOTICE ! since 2016, USGS has moved SRTM files to a secured 
-%	   https:// URL. This causes Matlab versions older than 2016a failing
-%	   download the tiles automatically, because of unzip function and 
-%	   certificate problems. This issue can be surrounded using this 'wget'
-%	   option and installing wget command on your system.
+%	   MacOSX systems). Because access to SRTM data uses a secured https://
+%	   URL, Matlab versions older than 2016a will fail to download the 
+%	   tiles automatically due to unzip function and certificate problems. 
+%	   This issue can be surrounded using this 'wget' option and installing
+%	   wget command on your system. For MacOSX, wget must be installed 
+%	   using homebrew, macports, fink or compiling from sources.
+%	   Also with this option, the login USER/PASSWORD can be stored in your
+%	   home .netrc instead of 'login' arguments, by adding these lines:
+%	      machine urs.earthdata.nasa.gov
+%	      user xxxxx
+%	      password xxxxx
 %
 %
 %	--- Examples ---
 %
 %	- to plot a map of the Paris region, France (single tile):
-%		readhgt(48,2)
+%		readhgt([48,49,2,3])
 %
 %	- to plot a map of Flores volcanic island, Indonesia (5 tiles):
-%		readhgt(-9,119:123)
+%		readhgt([-9,-8,119,124])
 %
 %	- to plot a map of the Misti volcano, Peru (SRTM1 cropped tile, needs
 %	   a valid login user and password at NASA/EarthDATA center):
-%	   readhgt([-16.4,-16.2,-71.5,-71.3],'srtm1','login','x','x','interp')
+%	   readhgt([-16.4,-16.2,-71.5,-71.3],'srtm1','login','xx','xx','interp')
 %
 %	- to download SRTM1 data of Cascade Range (27 individual tiles):
 %		X=readhgt(40:48,-123:-121,'tiles');
@@ -139,14 +143,14 @@ function varargout = readhgt(varargin)
 %		Institut de Physique du Globe de Paris
 %
 %	References:
-%		https://dds.cr.usgs.gov/srtm/version2_1
+%		https://srtm.kurviger.de
 %
 %	Acknowledgments: Yves Gaudemer, Jinkui Zhu, Greg
 %
 %	Created: 2012-04-22 in Paris, France
-%	Updated: 2020-05-28
+%	Updated: 2021-08-11
 
-%	Copyright (c) 2020, François Beauducel, covered by BSD License.
+%	Copyright (c) 2021, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without 
@@ -178,6 +182,7 @@ fidx = 'readhgt_srtm_index.txt';
 sz1 = [3601,3601]; % SRTM1 tile size
 sz3 = [1201,1201]; % SRTM3 tile size
 novalue = intmin('int16'); % -32768
+pixel = 1/sz1(1); % minimum pixel size
 n = 1;
 
 srtm1 = any(strcmpi(varargin,'srtm1'));
@@ -187,8 +192,9 @@ if srtm1
 	%url = 'http://e4ftl01.cr.usgs.gov/MODV6_Dal_D/SRTM/SRTMGL1.003/2000.02.11';
 	%url = 'http://rmd.neoknet.com/srtm1'; % unavailable since May 2020...
 else
-	% official USGS SRTM3 tiles (and SRTM1 for USA):
-	url = 'https://dds.cr.usgs.gov/srtm/version2_1';
+	% SRTM3 tiles (and SRTM1 for USA):
+	%url = 'https://dds.cr.usgs.gov/srtm/version2_1'; % unavailable since 2021...
+	url = 'https://srtm.kurviger.de'; % USGS mirror site
 end
 
 srtm3 = any(strcmpi(varargin,'srtm3'));
@@ -307,8 +313,8 @@ else
 		if ~isnumeric(crop) || any(size(crop) ~= [1,4])
 			error('Area must be a 4-element vector [LAT1,LAT2,LON1,LON2].')
 		end
-		lat = floor(min(crop(1:2))):floor(max(crop(1:2)));
-		lon = floor(min(normlon(crop(3:4)))):floor(max(normlon(crop(3:4))));
+		lat = floor(min(crop(1:2))):floor(max(crop(1:2))-pixel);
+		lon = floor(min(normlon(crop(3:4)))):floor(max(normlon(crop(3:4)))-pixel);
 		cropflag = 2;
 	else
 		lat = floor(varargin{1}(:));
