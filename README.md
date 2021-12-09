@@ -1,38 +1,44 @@
 # mapping-matlab
-Various mapping functions in Matlab/Octave (DEM manipulation, topographic maps, coordinates convert, ...). All work without any toolbox.
+Various mapping functions in Matlab/GNU Octave (DEM manipulation, topographic maps, coordinates convert and paths, ...). All work without any toolbox.
 
-### [READHGT](readhgt)
-Import/download NASA SRTM worldwide topographic data files (.HGT).
+## Topographic grids
+- ### [READHGT](readhgt)
+  Download/read NASA SRTM worldwide topographic data files (.HGT).
 
-### [DEM](dem)
-Shaded relief image plot for digital elevation model.
+- ### [DEM](dem)
+  Shaded relief image plot for digital elevation models.
 
-### [IBIL](ibil)
-Import ESRI BIL raster binary files.
+- ### [WHEREAMI](https://github.com/beaudu/whereami)
+  Automatic geolocation map (other repository).
 
-### [GRD](grd)
-Import and export ESRI/Arcinfo and GS/Surfer ASCII or binary GRD DEM files.
+- ### [IBIL](ibil)
+  Import ESRI BIL raster binary files.
 
-### [NANINTERP2](https://github.com/beaudu/naninterp2)
-2-D optimized linear interpolation (fill gaps).
+- ### [IGRD and EGRD](grd)
+  Import and export ESRI/Arcinfo and GS/Surfer ASCII or binary GRD DEM files.
 
-### [LL2UTM and UTM2LL](latlonutm)
-Latitude/longitude to and from UTM coordinates precise and vectorized conversion.
+- ### [NANINTERP2](https://github.com/beaudu/naninterp2)
+  2-D optimized linear interpolation to fill gaps in a grid (other repository).
 
-### [GREATCIRCLE and LOXODROME](greatcircle)
-Shortest and rhumb line path, distance and bearing.
+## Coordinates and paths
+- ### [LL2UTM and UTM2LL](latlonutm)
+  Latitude/longitude to and from UTM coordinates precise and vectorized conversion.
 
-### [RADIOCOVER](radiocover)
-Radio link coverage map.
+- ### [GREATCIRCLE and LOXODROME](greatcircle)
+  Shortest and rhumb line path, distance and bearing.
 
-### [COMPROSE](comprose)
-Compass rose plot.
+- ### [RADIOCOVER](radiocover)
+  Radio link coverage map.
 
-### [ARROWS](arrows)
-Generalized 2-D arrows plot.
+## Graphics
+- ### [COMPROSE](comprose)
+  Compass rose plot.
 
-### [POLARMAP](polarmap)
-Polarized color map.
+- ### [ARROWS](arrows)
+  Generalized 2-D arrows plot.
+
+- ### [POLARMAP](polarmap)
+  Polarized color map.
 
 
 ## Author
