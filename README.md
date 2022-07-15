@@ -1,5 +1,5 @@
-# mapping-matlab
-Various mapping functions in Matlab/GNU Octave (DEM manipulation, topographic maps, coordinates convert and paths, ...). All work without any toolbox.
+# mapping-lib
+Various mapping functions mostly written in Matlab/Octave (but Python equivalent will come): DEM manipulation, SRTM automatic download, topographic maps, coordinates convert and paths, ...
 
 ## Topographic grids
 - ### [READHGT](readhgt)
