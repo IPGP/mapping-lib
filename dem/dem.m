@@ -201,6 +201,9 @@ function varargout=dem(x,y,z,varargin)
 %	checking. Please prefer the param/value syntax.
 %
 %	Author: François Beauducel <beauducel@ipgp.fr>
+%
+%	Acknowledgments: Éric Gayer
+%
 %	Created: 2007-05-17 in Guadeloupe, French West Indies
 %	Updated: 2022-07-20
 
