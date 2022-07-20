@@ -9,21 +9,24 @@ This may be useful to produce high-quality and moderate-size Postscript image ad
 
 ## Examples
 
-Moon North Pole using the bone colormap and high contrast lighting (DEM source: raster LRO/LOLA LTVT)
+Moon North Pole using the bone colormap (`'colormap','bone'`), single light source northwest (`'azimuth',-45`) and high contrast lighting using 0.2% median filter (`'lcut',.2`). DEM source: raster LRO/LOLA LTVT.
 
 ![](dem_example_moon_bone.png)
 
-Indonesia archipelago using default colormaps, 'dms' axis basemap and legend scales (DEM source: raster NOAA/NGDC ETOPO1)
+Indonesia archipelago using default land/sea colormaps, lower saturation value (`'saturation',0.5`), lat/lon axis basemap (`'latlon'`) and legend scales (`'legend'`). DEM source: raster NOAA/NGDC ETOPO1.
 
 ![](dem_example_indonesia.png)
 
-Soufrière of Guadeloupe volcano lava dome: 1-m resolution with NaN values (DEM source: OVSG-IPGP/SCIAC)
+Soufrière of Guadeloupe volcano lava dome: 1-m resolution containing NaN values, two light sources (`'azimuth',[-45,45]` which is the default), cartesian basemap axes (`'cartesian'`). DEM source: OVSG-IPGP/SCIAC 2001.
 
 ![](dem_example_dome.png)
 
+Comparison of the two available shading methods on the Guadeloupe archipelago using roma reversed colormap (`'landcolor',flipud(roma)`): *(left)* uses the default light method (`'shading','light'`), *(right)* stack/transparency method (`'shading','stack'`) with default opacity value of 50% (`'opacity',.5`). DEM source: SRTM/NASA 2001.
+
+![](dem_example_guadeloupe.png)
 
 ## Author
-**François Beauducel**, [IPGP](www.ipgp.fr), [beaudu](https://github.com/beaudu), beauducel@ipgp.fr 
+**François Beauducel**, [IPGP](www.ipgp.fr), [beaudu](https://github.com/beaudu), beauducel@ipgp.fr
 
 ## Documentation
-See "doc dem" for syntax, examples and help. See also the READHGT function from same author.
+See "doc dem" for syntax, examples and help. See also the [READHGT](../readhgt/) function from same author.
