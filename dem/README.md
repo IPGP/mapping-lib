@@ -13,11 +13,11 @@ Moon North Pole using the bone colormap (`'colormap','bone'`), single light sour
 
 ![](dem_example_moon_bone.png)
 
-Indonesia archipelago using default land/sea colormaps, lower saturation value (`'saturation',0.5`), lat/lon axis basemap (`'latlon'`) and legend scales (`'legend'`). DEM source: raster NOAA/NGDC ETOPO1.
+Indonesia archipelago using default land/sea colormaps, lower saturation value (`'saturation',0.5`) and lat/lon axis basemap (`'latlon'`). DEM source: raster NOAA/NGDC ETOPO1.
 
 ![](dem_example_indonesia.png)
 
-Soufrière of Guadeloupe volcano lava dome: 1-m resolution containing NaN values, two light sources (`'azimuth',[-45,45]` which is the default), cartesian basemap axes (`'cartesian'`). DEM source: OVSG-IPGP/SCIAC 2001.
+Soufrière of Guadeloupe volcano lava dome: 1-m resolution containing NaN values, two light sources (`'azimuth',[-45,45]` which is the default), cartesian basemap axes (`'cartesian'`) and legend scales (`'legend'`). DEM source: OVSG-IPGP/SCIAC 2001.
 
 ![](dem_example_dome.png)
 
