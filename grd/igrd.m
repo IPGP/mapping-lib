@@ -19,13 +19,13 @@ function varargout = igrd(fn,crop)
 %
 %	Author: François Beauducel, IPG Paris.
 %	Created: 1996
-%	Updated: 2020-04-26
+%	Updated: 2022-05-23
 %
 %	References:
 %	   Golden Software Surfer, http://www.goldensoftware.com/
 %	   GMT (Generic Mapping Tools), http://gmt.soest.hawaii.edu
 
-%	Copyright (c) 1996-2020, François Beauducel, covered by BSD License.
+%	Copyright (c) 1996-2022, François Beauducel, covered by BSD License.
 %	All rights reserved.
 %
 %	Redistribution and use in source and binary forms, with or without
@@ -162,6 +162,15 @@ fclose(fid);
 
 x = linspace(xm(1),xm(2),sz(1));
 y = linspace(ym(1),ym(2),sz(2))';
+
+% crop
+if nargin > 1
+	kx = (x >= crop(1) & x <= crop(2));
+	ky = (y >= crop(3) & y <= crop(4));
+	x = x(kx);
+	y = y(ky);
+	z = z(ky,kx);
+end
 
 % replace NoData values by NaN
 z(z == ndv | abs(z) > 1e38) = NaN;
